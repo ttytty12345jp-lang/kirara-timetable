@@ -1,0 +1,176 @@
+import { useState, useEffect } from "react";
+import { CLASSES, DAYS, PERIODS, getClassColor } from "../utils/constants";
+
+export default function TemplateEditor({
+  teachers, subjects, specialSubjects,
+  getTemplateData, onSave, onDelete, onShowToast,
+  selectedDate, dayData, allData
+}) {
+  const [selectedDay, setSelectedDay] = useState("月");
+  const [selectedClass, setSelectedClass] = useState("1-1");
+  const [localTemplate, setLocalTemplate] = useState({});
+
+  // Load template into local state when day/class changes
+  useEffect(() => {
+    const tData = getTemplateData(selectedDay, selectedClass);
+    const map = {};
+    for (const rec of tData) {
+      map[rec.day_template_period] = {
+        subject: rec.day_template_subject || "",
+        teacher: rec.day_template_teacher || "",
+      };
+    }
+    setLocalTemplate(map);
+  }, [selectedDay, selectedClass, allData]);
+
+  function handleCellChange(period, field, value) {
+    setLocalTemplate(prev => ({
+      ...prev,
+      [period]: { ...(prev[period] || {}), [field]: value }
+    }));
+  }
+
+  function handleSaveTemplate() {
+    for (const period of PERIODS) {
+      const vals = localTemplate[period] || {};
+      onSave({
+        class_name: "DAY_TEMPLATE",
+        day_template_day: selectedDay,
+        day_template_class: selectedClass,
+        day_template_period: period,
+        day_template_subject: vals.subject || "",
+        day_template_teacher: vals.teacher || "",
+      });
+    }
+    onShowToast(`${selectedDay}曜 ${selectedClass} テンプレートを保存しました ✓`);
+  }
+
+  function handleDeleteTemplate() {
+    if (!confirm(`${selectedDay}曜 ${selectedClass} のテンプレートを削除しますか？`)) return;
+    onDelete(r =>
+      r.class_name === "DAY_TEMPLATE" &&
+      r.day_template_day === selectedDay &&
+      r.day_template_class === selectedClass
+    );
+    setLocalTemplate({});
+    onShowToast("テンプレートを削除しました");
+  }
+
+  function handleApplyToDate() {
+    if (!selectedDate) return;
+    const tData = getTemplateData(selectedDay, selectedClass);
+    if (tData.length === 0) {
+      onShowToast("テンプレートが空です", "error");
+      return;
+    }
+    for (const rec of tData) {
+      onSave({
+        class_name: rec.day_template_class,
+        date: selectedDate,
+        period: rec.day_template_period,
+        subject: rec.day_template_subject || "",
+        teacher: rec.day_template_teacher || "",
+      });
+    }
+    onShowToast(`${selectedDate} に適用しました ✓`);
+  }
+
+  const isSpecial = selectedClass === "えい・かに" || selectedClass === "いるか";
+  const subjectOptions = isSpecial ? specialSubjects : subjects;
+
+  return (
+    <div className="tab-content">
+      <div className="template-selectors">
+        <div className="form-group-inline">
+          <label className="form-label">曜日</label>
+          <div className="day-btn-group">
+            {DAYS.map(d => (
+              <button
+                key={d}
+                className={`day-btn ${selectedDay === d ? "active" : ""}`}
+                onClick={() => setSelectedDay(d)}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="form-group-inline">
+          <label className="form-label">クラス</label>
+          <select
+            className="form-select"
+            value={selectedClass}
+            onChange={e => setSelectedClass(e.target.value)}
+          >
+            {CLASSES.map(c => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <div className="template-table-wrapper">
+        <table className="template-table">
+          <thead>
+            <tr>
+              <th>時限</th>
+              <th>教科</th>
+              <th>教員</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PERIODS.map(period => {
+              const isLunch = period === "給食";
+              const vals = localTemplate[period] || {};
+              return (
+                <tr key={period} className={isLunch ? "lunch-row" : ""}>
+                  <td className="td-period-sm">{period}</td>
+                  <td>
+                    {isLunch ? (
+                      <div className="lunch-placeholder" style={{ background: "#e0f2fe" }} />
+                    ) : (
+                      <select
+                        className="template-cell-select"
+                        value={vals.subject || ""}
+                        onChange={e => handleCellChange(period, "subject", e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {subjectOptions.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    )}
+                  </td>
+                  <td>
+                    <select
+                      className="template-cell-select"
+                      value={vals.teacher || ""}
+                      onChange={e => handleCellChange(period, "teacher", e.target.value)}
+                    >
+                      <option value="">—</option>
+                      {teachers.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="btn-row">
+        <button className="primary-btn" onClick={handleSaveTemplate}>
+          💾 テンプレート保存
+        </button>
+        <button className="secondary-btn" onClick={handleApplyToDate}>
+          📋 {selectedDate} に適用
+        </button>
+        <button className="danger-btn" onClick={handleDeleteTemplate}>
+          🗑 削除
+        </button>
+      </div>
+    </div>
+  );
+}

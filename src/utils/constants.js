@@ -1,0 +1,81 @@
+export const CLASSES = [
+  "1-1", "1-2",
+  "2-1", "2-2",
+  "3-1", "3-2",
+  "4-1", "4-2",
+  "5-1", "5-2",
+  "6-1", "6-2",
+  "いるか",
+  "えい・かに",
+];
+
+export const PERIODS = ["1限", "2限", "3限", "4限", "5限", "6限", "給食"];
+
+// えい・かに用の複数行対応時限
+export const EIKANI_PERIODS = [
+  "1限", "1限_2", "1限_3",
+  "2限", "2限_2", "2限_3",
+  "3限", "3限_2", "3限_3",
+  "4限", "4限_2", "4限_3",
+  "5限", "5限_2", "5限_3",
+  "6限", "6限_2", "6限_3",
+  "給食",
+];
+
+export const DEFAULT_SUBJECTS = [
+  "国", "と", "算", "生", "理", "社", "英",
+  "図", "体", "音", "総", "家", "道", "学", "ク･委", "きららタイム"
+];
+
+export const DEFAULT_TEACHERS = [
+  "村上", "西口", "福多", "北池", "生嶋", "後藤",
+  "坂下", "佐藤", "信永", "川野", "木全", "山本", "在川"
+];
+
+export const DEFAULT_SPECIAL_SUBJECTS = [
+  "2-2算", "４年国", "4-1算", "５年国", "5-1算", "5-2算", "６年国"
+];
+
+export const GRADE_COLORS = {
+  1: "#fce7f3",
+  2: "#fef3c7",
+  3: "#fecaca",
+  4: "#dcfce7",
+  5: "#fed7aa",
+  6: "#e9d5ff",
+};
+
+export const SPECIAL_CLASS_COLOR = "#e0e7ff";
+
+export const DAYS = ["月", "火", "水", "木", "金"];
+
+export function getDateString(date) {
+  return date.toISOString().split("T")[0];
+}
+
+export function getDayOfWeek(dateStr) {
+  const days = ["日", "月", "火", "水", "木", "金", "土"];
+  const d = new Date(dateStr + "T00:00:00");
+  return days[d.getDay()];
+}
+
+export function getGrade(className) {
+  const match = className.match(/^(\d)/);
+  return match ? parseInt(match[1]) : null;
+}
+
+export function getClassColor(className) {
+  if (className === "えい・かに" || className === "いるか" || className === "かに") {
+    return SPECIAL_CLASS_COLOR;
+  }
+  const grade = getGrade(className);
+  return grade && GRADE_COLORS[grade] ? GRADE_COLORS[grade] : "#f1f5f9";
+}
+
+export function getBasePeriod(period) {
+  return period.replace(/_\d+$/, "");
+}
+
+export function isMainPeriod(period) {
+  return !period.includes("_");
+}
