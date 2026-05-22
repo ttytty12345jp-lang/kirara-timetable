@@ -109,7 +109,6 @@ body {
 
 /* ======== DATE PICKER ======== */
 .date-picker-row { display: flex; align-items: center; gap: 8px; justify-content: center; }
-
 .date-center { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; }
 
 .date-input {
@@ -183,13 +182,13 @@ body {
 .timetable-table {
   border-collapse: collapse;
   font-size: 11px;
-  min-width: 600px;
+  min-width: 900px;
   width: 100%;
 }
 
 .timetable-table th {
   background: #f1f5f9;
-  padding: 4px 3px;
+  padding: 4px 2px;
   text-align: center;
   font-weight: 600;
   font-size: 10px;
@@ -197,59 +196,45 @@ body {
   white-space: nowrap;
 }
 
-/* 列ヘッダー = 時限 */
-.th-class-col { width: 52px; min-width: 52px; background: #f1f5f9; }
+.th-period { width: 44px; min-width: 44px; }
 
-.th-period-col { min-width: 80px; vertical-align: top; padding: 3px 2px; }
+.th-class { min-width: 46px; font-size: 10px; padding: 3px 2px; }
 
-.th-lunch { background: #e0f2fe; }
+.th-subrow th { background: #f8fafc; padding: 2px; }
 
-.th-period-label { font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.th-subheader { display: table-cell; }
 
-.th-subrow-inline {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-around;
-  gap: 2px;
-}
-
-.th-subrow-inline span {
+.th-subheader span {
+  display: block;
   font-size: 9px;
   color: var(--text-muted);
-  flex: 1;
-  text-align: center;
+  line-height: 1.4;
 }
 
-/* 行ヘッダー = クラス */
-.td-class {
+.td-period {
   text-align: center;
-  padding: 3px 2px;
+  padding: 2px;
   border: 1px solid var(--border);
-  min-width: 52px;
-  position: sticky;
-  left: 0;
-  z-index: 2;
+  background: #f8fafc;
+  min-width: 44px;
 }
 
-.class-label { font-size: 11px; font-weight: 700; color: var(--text); white-space: nowrap; }
+.period-label { font-size: 10px; font-weight: 600; color: var(--text-muted); }
 
 .timetable-cell {
   border: 1px solid var(--border);
   padding: 0;
   vertical-align: top;
   transition: background-color 0.1s;
-  min-width: 80px;
+  min-width: 46px;
+  max-width: 56px;
 }
 
 .timetable-cell:hover { outline: 2px solid var(--primary-light); outline-offset: -1px; }
 
-/* 教科・教員を横並びに */
-.cell-inner { display: flex; flex-direction: row; }
-
 .cell-subject,
 .cell-teacher {
-  flex: 1;
-  min-height: 28px;
+  min-height: 18px;
   padding: 2px 3px;
   cursor: pointer;
   transition: background 0.1s;
@@ -258,7 +243,7 @@ body {
   justify-content: center;
 }
 
-.cell-subject { border-right: 1px solid rgba(0,0,0,0.08); }
+.cell-subject { border-bottom: 1px solid rgba(0,0,0,0.08); }
 .cell-subject:hover { background: rgba(99, 102, 241, 0.1); }
 .cell-teacher:hover { background: rgba(99, 102, 241, 0.08); }
 
@@ -284,7 +269,9 @@ body {
 .cell-inline-select:focus { outline: none; border-color: var(--primary); }
 
 .cell-lunch-placeholder,
-.lunch-placeholder { height: 28px; border-radius: 2px; }
+.lunch-placeholder { height: 18px; border-radius: 2px; }
+
+.lunch-row { background: rgba(224, 242, 254, 0.2); }
 
 /* ======== SAVE BUTTON ======== */
 .save-btn {
@@ -327,9 +314,7 @@ body {
 }
 
 .legend-item { display: flex; align-items: center; gap: 4px; }
-
 .legend-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-
 .changed-dot { background: var(--changed-bg); }
 .pending-legend-dot { background: var(--accent); }
 .legend-sep { margin-left: auto; }
@@ -353,11 +338,8 @@ body {
 .tab-btn:hover:not(.active) { background: var(--primary-light); color: var(--primary); }
 
 .tab-content { display: flex; flex-direction: column; gap: 12px; }
-
 .form-group { display: flex; flex-direction: column; gap: 6px; }
-
 .form-group-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-
 .form-label { font-size: 12px; font-weight: 500; color: var(--text); white-space: nowrap; }
 
 .form-textarea {
