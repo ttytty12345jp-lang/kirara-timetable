@@ -1,4 +1,9 @@
+console.log("🚀 App loaded - " + new Date().toISOString());
+console.log("ENV:", import.meta.env);
+
 import { useState, useEffect, useCallback } from "react";
+// ... 以下既存コード
+// import { useState, useEffect, useCallback } from "react";
 import Header from "./components/Header";
 import DatePicker from "./components/DatePicker";
 import TimetableGrid from "./components/TimetableGrid";
