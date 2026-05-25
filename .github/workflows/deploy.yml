@@ -33,7 +33,7 @@ jobs:
       - name: Build with environment variables
         env:
           VITE_SUPABASE_URL: https://ddzpylceuerwnnbiefrd.supabase.co
-          VITE_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkenB5bGNldWVyd25uYmllZnJkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODExNzQsImV4cCI6MjA5NTA1NzE3NH0.n4uNxYr8gykoz6nbJnWoBbypvkq5RMZkrH6GWr4mEhwnpm
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
       
       - uses: actions/configure-pages@v4
