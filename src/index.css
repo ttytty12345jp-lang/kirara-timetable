@@ -605,3 +605,16 @@ body {
   .td-class-label { min-width: 34px; }
   .td-kind { min-width: 26px; left: 34px; }
 }
+/* えい・かに / いるか用テンプレートテーブル */
+.template-table-special .td-row-label {
+  width: 32px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  background: #f8fafc;
+}
+
+.template-table-special .td-period-sm {
+  vertical-align: middle;
+}
