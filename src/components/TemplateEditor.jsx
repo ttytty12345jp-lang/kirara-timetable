@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { CLASSES, DAYS, PERIODS, getClassColor } from "../utils/constants";
+import { CLASSES, DAYS, getClassColor } from "../utils/constants";
+
+// テンプレート編集時の表示順（給食を4限と5限の間に）
+const TEMPLATE_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
 
 export default function TemplateEditor({
   teachers, subjects, specialSubjects,
@@ -10,7 +13,6 @@ export default function TemplateEditor({
   const [selectedClass, setSelectedClass] = useState("1-1");
   const [localTemplate, setLocalTemplate] = useState({});
 
-  // Load template into local state when day/class changes
   useEffect(() => {
     const tData = getTemplateData(selectedDay, selectedClass);
     const map = {};
@@ -31,7 +33,7 @@ export default function TemplateEditor({
   }
 
   function handleSaveTemplate() {
-    for (const period of PERIODS) {
+    for (const period of TEMPLATE_PERIODS) {
       const vals = localTemplate[period] || {};
       onSave({
         class_name: "DAY_TEMPLATE",
@@ -119,27 +121,23 @@ export default function TemplateEditor({
             </tr>
           </thead>
           <tbody>
-            {PERIODS.map(period => {
+            {TEMPLATE_PERIODS.map(period => {
               const isLunch = period === "給食";
               const vals = localTemplate[period] || {};
               return (
                 <tr key={period} className={isLunch ? "lunch-row" : ""}>
                   <td className="td-period-sm">{period}</td>
                   <td>
-                    {isLunch ? (
-                      <div className="lunch-placeholder" style={{ background: "#e0f2fe" }} />
-                    ) : (
-                      <select
-                        className="template-cell-select"
-                        value={vals.subject || ""}
-                        onChange={e => handleCellChange(period, "subject", e.target.value)}
-                      >
-                        <option value="">—</option>
-                        {subjectOptions.map(s => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    )}
+                    <select
+                      className="template-cell-select"
+                      value={vals.subject || ""}
+                      onChange={e => handleCellChange(period, "subject", e.target.value)}
+                    >
+                      <option value="">—</option>
+                      {subjectOptions.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </td>
                   <td>
                     <select

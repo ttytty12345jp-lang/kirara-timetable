@@ -144,7 +144,6 @@ export default function TimetableGrid({
               const isEikani = cls === "えい・かに";
 
               if (isEikani) {
-                // えい・かに：教①②③ / 員①②③ の6行
                 const subRows = ["教①", "教②", "教③"];
                 const tchrRows = ["員①", "員②", "員③"];
                 const suffixes = ["", "_2", "_3"];
@@ -175,14 +174,13 @@ export default function TimetableGrid({
                                 key={period}
                                 className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                                 style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => !isLunch && handleSingleOrDouble(cls, pKey, "subject")}
+                                onClick={() => handleSingleOrDouble(cls, pKey, "subject")}
                               >
-                                {isLunch
-                                  ? <span className="cell-text lunch-text">給食</span>
-                                  : isEditing
-                                    ? <CellEditor value={value} options={specialSubjects} onConfirm={v => handleConfirm(cls, pKey, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                                    : <span className="cell-text subject-text">{value}</span>
-                                }
+                                {isEditing ? (
+                                  <CellEditor value={value} options={specialSubjects} onConfirm={v => handleConfirm(cls, pKey, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
+                                ) : (
+                                  <span className="cell-text subject-text">{value || (isLunch ? "給食" : "")}</span>
+                                )}
                               </td>
                             );
                           })}
@@ -208,12 +206,13 @@ export default function TimetableGrid({
                                 key={period}
                                 className={`timetable-cell teacher-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                                 style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => !isLunch && handleSingleOrDouble(cls, pKey, "teacher")}
+                                onClick={() => handleSingleOrDouble(cls, pKey, "teacher")}
                               >
-                                {isEditing
-                                  ? <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, pKey, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                                  : <span className="cell-text teacher-text">{value}</span>
-                                }
+                                {isEditing ? (
+                                  <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, pKey, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
+                                ) : (
+                                  <span className="cell-text teacher-text">{value}</span>
+                                )}
                               </td>
                             );
                           })}
@@ -224,7 +223,7 @@ export default function TimetableGrid({
                 );
               }
 
-              // 通常クラス（いるか含む）：教科行 / 教員行 の2行
+              // 通常クラス
               return (
                 <React.Fragment key={cls}>
                   <tr className="class-subject-row">
@@ -245,14 +244,13 @@ export default function TimetableGrid({
                           key={period}
                           className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                           style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => !isLunch && handleSingleOrDouble(cls, period, "subject")}
+                          onClick={() => handleSingleOrDouble(cls, period, "subject")}
                         >
-                          {isLunch
-                            ? <span className="cell-text lunch-text">給食</span>
-                            : isEditing
-                              ? <CellEditor value={value} options={subjects} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                              : <span className="cell-text subject-text">{value}</span>
-                          }
+                          {isEditing ? (
+                            <CellEditor value={value} options={subjects} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
+                          ) : (
+                            <span className="cell-text subject-text">{value || (isLunch ? "給食" : "")}</span>
+                          )}
                         </td>
                       );
                     })}
@@ -272,12 +270,13 @@ export default function TimetableGrid({
                           key={period}
                           className={`timetable-cell teacher-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                           style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => !isLunch && handleSingleOrDouble(cls, period, "teacher")}
+                          onClick={() => handleSingleOrDouble(cls, period, "teacher")}
                         >
-                          {isEditing
-                            ? <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, period, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                            : <span className="cell-text teacher-text">{value}</span>
-                          }
+                          {isEditing ? (
+                            <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, period, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
+                          ) : (
+                            <span className="cell-text teacher-text">{value}</span>
+                          )}
                         </td>
                       );
                     })}
