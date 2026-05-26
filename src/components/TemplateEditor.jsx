@@ -130,11 +130,12 @@ export default function TemplateEditor({
                   <td>
                     <select
                       className="template-cell-select"
-                      value={vals.subject || ""}
+                      value={isLunch ? "" : (vals.subject || "")}
+                      disabled={isLunch}
                       onChange={e => handleCellChange(period, "subject", e.target.value)}
                     >
                       <option value="">—</option>
-                      {subjectOptions.map(s => (
+                      {!isLunch && subjectOptions.map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
@@ -142,11 +143,12 @@ export default function TemplateEditor({
                   <td>
                     <select
                       className="template-cell-select"
-                      value={vals.teacher || ""}
+                      value={isLunch ? "" : (vals.teacher || "")}
+                      disabled={isLunch}
                       onChange={e => handleCellChange(period, "teacher", e.target.value)}
                     >
                       <option value="">—</option>
-                      {teachers.map(t => (
+                      {!isLunch && teachers.map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
