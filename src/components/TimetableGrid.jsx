@@ -168,6 +168,7 @@ export default function TimetableGrid({
             {CLASSES.map(cls => {
               const bgColor = getClassColor(cls);
               const isEikani = cls === "えい・かに";
+              const isIruka = cls === "いるか";
 
               if (isEikani) {
                 const subRows = ["教①", "教②", "教③"];
@@ -200,7 +201,7 @@ export default function TimetableGrid({
                                 key={period}
                                 className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                                 style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => !isLunch && handleSingleOrDouble(cls, isLunch ? period : pKey, "subject")}
+                                onClick={() => !isLunch && handleSingleOrDouble(cls, pKey, "subject")}
                               >
                                 {isEditing ? (
                                   <CellEditor value={value} options={specialSubjects} onConfirm={v => handleConfirm(cls, pKey, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
@@ -249,7 +250,10 @@ export default function TimetableGrid({
                 );
               }
 
-              // 通常クラス
+              // 通常クラス・いるか
+              // いるかクラスの場合は特別クラス教科(specialSubjects)を使用、それ以外は通常の教科(subjects)を使用
+              const currentSubjectOptions = isIruka ? specialSubjects : subjects;
+
               return (
                 <React.Fragment key={cls}>
                   <tr className="class-subject-row">
@@ -270,10 +274,10 @@ export default function TimetableGrid({
                           key={period}
                           className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                           style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => !isLunch && handleSingleOrDouble(cls, isLunch ? period : pKey, "subject")}
+                          onClick={() => !isLunch && handleSingleOrDouble(cls, period, "subject")}
                         >
                           {isEditing ? (
-                            <CellEditor value={value} options={subjects} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
+                            <CellEditor value={value} options={currentSubjectOptions} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
                           ) : (
                             <span className="cell-text subject-text">{value || (isLunch ? "給食" : "")}</span>
                           )}
