@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { CLASSES, DAYS, getClassColor } from "../utils/constants";
 
 const TEMPLATE_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
@@ -33,25 +33,22 @@ export default function TemplateEditor({
 
   function handleSaveTemplate() {
     const isEikani = selectedClass === "えい・かに";
-    const isIruka = selectedClass === "いるか";
     const periodsToSave = [];
 
-    if (isEikani || isIruka) {
-      // えい・かに、いるか：3行分を保存
+    if (isEikani) {
+      // えい・かにのみ：3行分を保存
       const suffixes = ["", "_2", "_3"];
       for (const basePeriod of TEMPLATE_PERIODS) {
         if (basePeriod === "給食") {
-          // 給食は1つだけ
           periodsToSave.push(basePeriod);
         } else {
-          // 1限, 1限_2, 1限_3
           for (const sfx of suffixes) {
             periodsToSave.push(`${basePeriod}${sfx}`);
           }
         }
       }
     } else {
-      // 通常クラス
+      // いるか・通常クラス：1行
       periodsToSave.push(...TEMPLATE_PERIODS);
     }
 
@@ -100,9 +97,7 @@ export default function TemplateEditor({
   }
 
   const isEikani = selectedClass === "えい・かに";
-  const isIruka = selectedClass === "いるか";
-  const isSpecial = isEikani || isIruka;
-  const subjectOptions = isSpecial ? specialSubjects : subjects;
+  const subjectOptions = isEikani ? specialSubjects : subjects;
 
   return (
     <div className="tab-content">
@@ -135,9 +130,8 @@ export default function TemplateEditor({
         </div>
       </div>
 
-      {isSpecial ? (
-        // えい・かに / いるか：3行表示
-        <SpecialTemplateTable
+      {isEikani ? (
+        <EikaniTemplateTable
           periods={TEMPLATE_PERIODS}
           localTemplate={localTemplate}
           subjectOptions={subjectOptions}
@@ -145,7 +139,6 @@ export default function TemplateEditor({
           onCellChange={handleCellChange}
         />
       ) : (
-        // 通常クラス：1行表示
         <NormalTemplateTable
           periods={TEMPLATE_PERIODS}
           localTemplate={localTemplate}
@@ -170,7 +163,7 @@ export default function TemplateEditor({
   );
 }
 
-// 通常クラス用テンプレートテーブル
+// 通常クラス・いるか用テンプレートテーブル
 function NormalTemplateTable({ periods, localTemplate, subjectOptions, teachers, onCellChange }) {
   return (
     <div className="template-table-wrapper">
@@ -222,8 +215,8 @@ function NormalTemplateTable({ periods, localTemplate, subjectOptions, teachers,
   );
 }
 
-// えい・かに / いるか用テンプレートテーブル（3行表示）
-function SpecialTemplateTable({ periods, localTemplate, subjectOptions, teachers, onCellChange }) {
+// えい・かに専用テンプレートテーブル（3行表示）
+function EikaniTemplateTable({ periods, localTemplate, subjectOptions, teachers, onCellChange }) {
   const suffixes = ["", "_2", "_3"];
   const rowLabels = ["①", "②", "③"];
 
@@ -243,11 +236,10 @@ function SpecialTemplateTable({ periods, localTemplate, subjectOptions, teachers
             const isLunch = basePeriod === "給食";
             
             if (isLunch) {
-              // 給食は1行のみ
               const vals = localTemplate[basePeriod] || {};
               return (
                 <tr key={basePeriod} className="lunch-row">
-                  <td className="td-period-sm" rowSpan={1}>{basePeriod}</td>
+                  <td className="td-period-sm">{basePeriod}</td>
                   <td className="td-row-label">—</td>
                   <td>
                     <select
@@ -277,7 +269,6 @@ function SpecialTemplateTable({ periods, localTemplate, subjectOptions, teachers
               );
             }
 
-            // 通常時限は3行
             return (
               <React.Fragment key={basePeriod}>
                 {suffixes.map((sfx, idx) => {
