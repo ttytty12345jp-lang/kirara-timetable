@@ -12,6 +12,12 @@ export default function TemplateEditor({
   const [selectedClass, setSelectedClass] = useState("1-1");
   const [localTemplate, setLocalTemplate] = useState({});
 
+  // 3段表示（レイアウト）にするのは「えい・かに」のみ
+  const isEikani = selectedClass === "えい・かに";
+  
+  // 特別クラス教科（specialSubjects）を参照するのは「えい・かに」と「いるか」
+  const isSpecialSubjectClass = selectedClass === "えい・かに" || selectedClass === "いるか";
+
   useEffect(() => {
     const tData = getTemplateData(selectedDay, selectedClass);
     const map = {};
@@ -32,7 +38,6 @@ export default function TemplateEditor({
   }
 
   function handleSaveTemplate() {
-    const isEikani = selectedClass === "えい・かに";
     const periodsToSave = [];
 
     if (isEikani) {
@@ -96,8 +101,8 @@ export default function TemplateEditor({
     onShowToast(`${selectedDate} に適用しました ✓`);
   }
 
-  const isEikani = selectedClass === "えい・かに";
-  const subjectOptions = isEikani ? specialSubjects : subjects;
+  // クラスに応じて参照する教科を切り替え
+  const subjectOptions = isSpecialSubjectClass ? specialSubjects : subjects;
 
   return (
     <div className="tab-content">
@@ -163,7 +168,7 @@ export default function TemplateEditor({
   );
 }
 
-// 通常クラス・いるか用テンプレートテーブル
+// 通常クラス・いるか用テンプレートテーブル（1段表示）
 function NormalTemplateTable({ periods, localTemplate, subjectOptions, teachers, onCellChange }) {
   return (
     <div className="template-table-wrapper">
@@ -185,11 +190,12 @@ function NormalTemplateTable({ periods, localTemplate, subjectOptions, teachers,
                 <td>
                   <select
                     className="template-cell-select"
-                    value={vals.subject || ""}
+                    value={isLunch ? "" : (vals.subject || "")}
+                    disabled={isLunch}
                     onChange={e => onCellChange(period, "subject", e.target.value)}
                   >
                     <option value="">—</option>
-                    {subjectOptions.map(s => (
+                    {!isLunch && subjectOptions.map(s => (
                       <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
@@ -244,13 +250,10 @@ function EikaniTemplateTable({ periods, localTemplate, subjectOptions, teachers,
                   <td>
                     <select
                       className="template-cell-select"
-                      value={vals.subject || ""}
-                      onChange={e => onCellChange(basePeriod, "subject", e.target.value)}
+                      value=""
+                      disabled
                     >
                       <option value="">—</option>
-                      {subjectOptions.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
                     </select>
                   </td>
                   <td>
