@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { CLASSES, DAYS, getClassColor } from "../utils/constants";
 
 // テンプレート編集時の表示順（給食を4限と5限の間に）
@@ -33,13 +33,30 @@ export default function TemplateEditor({
   }
 
   function handleSaveTemplate() {
+    const periodsToSave = [];
+    const isEikani = selectedClass === "えい・かに";
+
     for (const period of TEMPLATE_PERIODS) {
-      const vals = localTemplate[period] || {};
+      if (period === "給食") {
+        periodsToSave.push("給食");
+      } else if (isEikani) {
+        // 「えい・かに」だけ3つのキーを保存対象にする
+        periodsToSave.push(period);
+        periodsToSave.push(`${period}_2`);
+        periodsToSave.push(`${period}_3`);
+      } else {
+        // 「いるか」を含むその他のクラスは通常通り1つだけ
+        periodsToSave.push(period);
+      }
+    }
+
+    for (const pKey of periodsToSave) {
+      const vals = localTemplate[pKey] || {};
       onSave({
         class_name: "DAY_TEMPLATE",
         day_template_day: selectedDay,
         day_template_class: selectedClass,
-        day_template_period: period,
+        day_template_period: pKey,
         day_template_subject: vals.subject || "",
         day_template_teacher: vals.teacher || "",
       });
@@ -77,8 +94,16 @@ export default function TemplateEditor({
     onShowToast(`${selectedDate} に適用しました ✓`);
   }
 
-  const isSpecial = selectedClass === "えい・かに" || selectedClass === "いるか";
-  const subjectOptions = isSpecial ? specialSubjects : subjects;
+  // 「えい・かに」と「いるか」は専科用の教科リストを使用
+  const isSpecialClass = selectedClass === "えい・かに" || selectedClass === "いるか";
+  const subjectOptions = isSpecialClass ? specialSubjects : subjects;
+
+  // 「えい・かに」だけを3段表示にする判定
+  const isEikani = selectedClass === "えい・かに";
+
+  const subRows = ["教①", "教②", "教③"];
+  const tchrRows = ["員①", "員②", "員③"];
+  const suffixes = ["", "_2", "_3"];
 
   return (
     <div className="tab-content">
@@ -116,33 +141,123 @@ export default function TemplateEditor({
           <thead>
             <tr>
               <th>時限</th>
+              <th>種別</th>
               <th>教科</th>
               <th>教員</th>
             </tr>
           </thead>
           <tbody>
             {TEMPLATE_PERIODS.map(period => {
-              const isLunch = period === "給微" || period === "給食";
+              const isLunch = period === "給食";
+
+              // ─── パターンA: 給食時間（全クラス共通） ───
+              if (isLunch) {
+                const vals = localTemplate["給食"] || {};
+                return (
+                  <tr key={period} className="lunch-row">
+                    <td className="td-period-sm">{period}</td>
+                    <td className="td-kind-sm">—</td>
+                    <td>
+                      <select className="template-cell-select" value="" disabled>
+                        <option value="">—</option>
+                      </select>
+                    </td>
+                    <td>
+                      <select
+                        className="template-cell-select"
+                        value={vals.teacher || ""}
+                        onChange={e => handleCellChange("給食", "teacher", e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {teachers.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </td>
+                  </tr>
+                );
+              }
+
+              // ─── パターンB: 「えい・かに」クラス（3段構成） ───
+              if (isEikani) {
+                return (
+                  <React.Fragment key={period}>
+                    {subRows.map((label, i) => {
+                      const pKey = `${period}${suffixes[i]}`;
+                      const vals = localTemplate[pKey] || {};
+                      return (
+                        <tr key={`${period}-${label}`}>
+                          {i === 0 && (
+                            <td className="td-period-sm" rowSpan={6}>
+                              {period}
+                            </td>
+                          )}
+                          <td className="td-kind-sm" style={{ color: "#4b5563", fontWeight: "bold" }}>{label}</td>
+                          <td>
+                            <select
+                              className="template-cell-select"
+                              value={vals.subject || ""}
+                              onChange={e => handleCellChange(pKey, "subject", e.target.value)}
+                            >
+                              <option value="">—</option>
+                              {subjectOptions.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td style={{ backgroundColor: "#f9fafb" }}>
+                            <select className="template-cell-select" value="" disabled></select>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {tchrRows.map((label, i) => {
+                      const pKey = `${period}${suffixes[i]}`;
+                      const vals = localTemplate[pKey] || {};
+                      return (
+                        <tr key={`${period}-${label}`} style={{ borderBottom: i === 2 ? "2px solid #e5e7eb" : "1px dashed #e5e7eb" }}>
+                          <td className="td-kind-sm" style={{ color: "#4b5563", fontWeight: "bold" }}>{label}</td>
+                          <td style={{ backgroundColor: "#f9fafb" }}>
+                            <select className="template-cell-select" value="" disabled></select>
+                          </td>
+                          <td>
+                            <select
+                              className="template-cell-select"
+                              value={vals.teacher || ""}
+                              onChange={e => handleCellChange(pKey, "teacher", e.target.value)}
+                            >
+                              <option value="">—</option>
+                              {teachers.map(t => (
+                                <option key={t} value={t}>{t}</option>
+                              ))}
+                            </select>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </React.Fragment>
+                );
+              }
+
+              // ─── パターンC: 「いるか」および通常クラス（1段構成） ───
               const vals = localTemplate[period] || {};
               return (
-                <tr key={period} className={isLunch ? "lunch-row" : ""}>
+                <tr key={period}>
                   <td className="td-period-sm">{period}</td>
+                  <td className="td-kind-sm">{selectedClass === "いるか" ? "専科" : "通常"}</td>
                   <td>
-                    {/* 教科：給食のときだけ選択不可＆値を空白に固定 */}
                     <select
                       className="template-cell-select"
-                      value={isLunch ? "" : (vals.subject || "")}
-                      disabled={isLunch}
+                      value={vals.subject || ""}
                       onChange={e => handleCellChange(period, "subject", e.target.value)}
                     >
                       <option value="">—</option>
-                      {!isLunch && subjectOptions.map(s => (
+                      {subjectOptions.map(s => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </td>
                   <td>
-                    {/* 教員：給食のときでも通常通り選択可能 */}
                     <select
                       className="template-cell-select"
                       value={vals.teacher || ""}
