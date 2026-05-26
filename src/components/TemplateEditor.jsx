@@ -122,12 +122,13 @@ export default function TemplateEditor({
           </thead>
           <tbody>
             {TEMPLATE_PERIODS.map(period => {
-              const isLunch = period === "給食";
+              const isLunch = period === "給微" || period === "給食";
               const vals = localTemplate[period] || {};
               return (
                 <tr key={period} className={isLunch ? "lunch-row" : ""}>
                   <td className="td-period-sm">{period}</td>
                   <td>
+                    {/* 教科：給食のときだけ選択不可＆値を空白に固定 */}
                     <select
                       className="template-cell-select"
                       value={isLunch ? "" : (vals.subject || "")}
@@ -141,14 +142,14 @@ export default function TemplateEditor({
                     </select>
                   </td>
                   <td>
+                    {/* 教員：給食のときでも通常通り選択可能 */}
                     <select
                       className="template-cell-select"
-                      value={isLunch ? "" : (vals.teacher || "")}
-                      disabled={isLunch}
+                      value={vals.teacher || ""}
                       onChange={e => handleCellChange(period, "teacher", e.target.value)}
                     >
                       <option value="">—</option>
-                      {!isLunch && teachers.map(t => (
+                      {teachers.map(t => (
                         <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
