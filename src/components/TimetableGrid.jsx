@@ -200,7 +200,7 @@ export default function TimetableGrid({
                                 key={period}
                                 className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                                 style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => handleSingleOrDouble(cls, pKey, "subject")}
+                                onClick={() => !isLunch && handleSingleOrDouble(cls, isLunch ? period : pKey, "subject")}
                               >
                                 {isEditing ? (
                                   <CellEditor value={value} options={specialSubjects} onConfirm={v => handleConfirm(cls, pKey, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
@@ -270,7 +270,7 @@ export default function TimetableGrid({
                           key={period}
                           className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
                           style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => handleSingleOrDouble(cls, period, "subject")}
+                          onClick={() => !isLunch && handleSingleOrDouble(cls, isLunch ? period : pKey, "subject")}
                         >
                           {isEditing ? (
                             <CellEditor value={value} options={subjects} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
