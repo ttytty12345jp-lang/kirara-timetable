@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { CLASSES, getClassColor } from "../utils/constants";
 
-// 表示順：1限〜4限 → 給食 → 5限・6限
 const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
 
 function isCellChanged(templateVal, currentVal) {
@@ -58,9 +57,20 @@ export default function TimetableGrid({
 
   function getCellValue(cls, period, field) {
     const key = `${cls}|${period}`;
-    if (pendingChanges[key]?.[field] !== undefined) return pendingChanges[key][field];
+    
+    // 1. 未保存の変更があればそれを返す
+    if (pendingChanges[key]?.[field] !== undefined) {
+      return pendingChanges[key][field];
+    }
+    
+    // 2. 保存済みデータがあればそれを返す
     const rec = dayData.find(r => r.class_name === cls && r.period === period);
-    return rec?.[field] || "";
+    if (rec && rec[field]) {
+      return rec[field];
+    }
+    
+    // 3. データがなければテンプレート値を返す（デフォルト表示）
+    return getTemplateValue(cls, period, field);
   }
 
   function getTemplateValue(cls, period, field) {
@@ -96,18 +106,34 @@ export default function TimetableGrid({
 
   function handleSaveAll() {
     const toSave = [];
+    
+    // 未保存の変更を保存
     for (const [key, changes] of Object.entries(pendingChanges)) {
       const [cls, period] = key.split("|");
       const existing = dayData.find(r => r.class_name === cls && r.period === period);
+      const templateSubject = getTemplateValue(cls, period, "subject");
+      const templateTeacher = getTemplateValue(cls, period, "teacher");
+      
+      const subject = changes.subject !== undefined ? changes.subject : (existing?.subject || templateSubject);
+      const teacher = changes.teacher !== undefined ? changes.teacher : (existing?.teacher || templateTeacher);
+      
       toSave.push({
-        class_name: cls, date: selectedDate, period,
-        subject: changes.subject !== undefined ? changes.subject : (existing?.subject || ""),
-        teacher: changes.teacher !== undefined ? changes.teacher : (existing?.teacher || ""),
+        class_name: cls,
+        date: selectedDate,
+        period,
+        subject,
+        teacher,
       });
     }
+    
+    // 既存データで変更されていないものも保持
     for (const rec of dayData) {
-      if (!pendingChanges[`${rec.class_name}|${rec.period}`]) toSave.push(rec);
+      const key = `${rec.class_name}|${rec.period}`;
+      if (!pendingChanges[key]) {
+        toSave.push(rec);
+      }
     }
+    
     for (const rec of toSave) onSave(rec);
     setPendingChanges({});
     onShowToast("保存しました ✓");
