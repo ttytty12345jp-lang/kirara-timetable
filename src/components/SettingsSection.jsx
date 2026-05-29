@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { CLASSES, DAYS, PERIODS, DEFAULT_SUBJECTS, DEFAULT_TEACHERS, DEFAULT_SPECIAL_SUBJECTS } from "../utils/constants";
 import TemplateEditor from "./TemplateEditor";
+import TeacherScheduleExport from "./TeacherScheduleExport";
 
 export default function SettingsSection({
   subjects, teachers, specialSubjects,
@@ -39,6 +40,7 @@ export default function SettingsSection({
   const tabs = [
     { id: "master", label: "📚 教科・教員" },
     { id: "template", label: "📅 テンプレート" },
+    { id: "teacher", label: "👨‍🏫 教員スケジュール" },
     { id: "export", label: "📤 データ管理" },
   ];
 
@@ -124,6 +126,14 @@ export default function SettingsSection({
           selectedDate={selectedDate}
           dayData={dayData}
           allData={allData}
+        />
+      )}
+
+      {activeTab === "teacher" && (
+        <TeacherScheduleExport
+          dayData={dayData}
+          allData={allData}
+          teachers={teachers}
         />
       )}
 
