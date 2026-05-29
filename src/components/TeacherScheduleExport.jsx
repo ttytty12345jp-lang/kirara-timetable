@@ -8,7 +8,12 @@ const DAYS_JA = ["月", "火", "水", "木", "金"];
 function getMonday(dateStr) {
   const d = new Date(dateStr + "T00:00:00");
   const day = d.getDay();
+  
+  // getDay() は 日:0, 月:1, 火:2, 水:3, 木:4, 金:5, 土:6
+  // 月曜日(1)を基準として、何日前（または何日後）に引けば月曜日になるかを計算
+  // 日曜日(0)の場合は 6日前 に戻す
   const diff = day === 0 ? -6 : 1 - day;
+  
   d.setDate(d.getDate() + diff);
   return d.toISOString().split("T")[0];
 }
