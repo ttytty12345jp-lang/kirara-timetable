@@ -89,10 +89,10 @@ export default function TeacherScheduleExport({ allData, teachers }) {
     summaryRows.push([`対象週：${weekData.monday}（月）〜 ${addDays(weekData.monday, 4)}（金）`]);
     summaryRows.push([]); 
 
-    // ヘッダー行 (例: 月曜日\n2026-05-24)
+    // ★ 修正ポイント: 週間サマリーのヘッダーも、日付から逆算した絶対的に正しい曜日を出力する
     summaryRows.push([
       "時限",
-      ...weekData.schedule.map(d => `${d.day}曜日\n${d.date}`),
+      ...weekData.schedule.map(d => `${getWeekdayLabel(d.date)}曜日\n${d.date}`),
     ]);
 
     for (const period of DISPLAY_PERIODS) {
@@ -130,7 +130,6 @@ export default function TeacherScheduleExport({ allData, teachers }) {
     for (const dayData of weekData.schedule) {
       for (const cell of dayData.periods) {
         if (cell.class_name) {
-          // ★ 修正ポイント: 配列のインデックスではなく、日付から直接正しい曜日を計算して出力
           const correctWeekday = getWeekdayLabel(dayData.date);
           
           detailRows.push([
@@ -220,7 +219,7 @@ export default function TeacherScheduleExport({ allData, teachers }) {
                   <th className="th-period-fixed">時限</th>
                   {weekData.schedule.map(d => (
                     <th key={d.day}>
-                      <div className="th-day">{d.day}曜</div>
+                      <div className="th-day">{getWeekdayLabel(d.date)}曜</div>
                       <div className="th-date">{d.date.slice(5)}</div>
                     </th>
                   ))}
