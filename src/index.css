@@ -737,3 +737,155 @@ body {
   padding: 4px 6px;
   border-bottom: 1px solid var(--border);
 }
+/* ======== TEACHER SCHEDULE EXPORT ======== */
+.teacher-preview {
+  margin-top: 14px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.teacher-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.teacher-preview-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.teacher-total-badge {
+  background: var(--primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.teacher-table-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+}
+
+.teacher-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 10px;
+  min-width: 420px;
+}
+
+.teacher-table th {
+  background: #2d3748;
+  color: white;
+  padding: 5px 4px;
+  text-align: center;
+  font-weight: 600;
+  border: 1px solid #1a202c;
+}
+
+.th-period-fixed {
+  min-width: 38px;
+}
+
+.th-day {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.th-date {
+  font-size: 9px;
+  opacity: 0.8;
+  margin-top: 2px;
+}
+
+.td-period-fixed {
+  background: #f1f5f9;
+  text-align: center;
+  font-weight: 600;
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  padding: 4px 2px;
+}
+
+.teacher-cell {
+  border: 1px solid var(--border);
+  text-align: center;
+  padding: 4px 2px;
+  min-width: 60px;
+  height: 36px;
+  vertical-align: middle;
+  background: white;
+}
+
+.teacher-cell-filled {
+  background: #eff6ff;
+}
+
+.teacher-cell-class {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.teacher-cell-subject {
+  font-size: 9px;
+  color: var(--text);
+  margin-top: 2px;
+}
+
+.teacher-cell-empty {
+  color: #cbd5e1;
+  font-size: 11px;
+}
+
+.teacher-details {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.teacher-details summary {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 8px 10px;
+  user-select: none;
+  list-style: none;
+}
+
+.teacher-details summary:hover {
+  background: var(--primary-light);
+}
+
+.teacher-detail-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 10px;
+}
+
+.teacher-detail-table th {
+  background: #f1f5f9;
+  padding: 5px 8px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  border-top: 1px solid var(--border);
+}
+
+.teacher-detail-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
