@@ -79,3 +79,5 @@ export function getBasePeriod(period) {
 export function isMainPeriod(period) {
   return !period.includes("_");
 }
+// テーブル表示用の時限順序（給食を4限と5限の間に）
+export const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];

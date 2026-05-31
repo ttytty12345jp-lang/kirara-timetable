@@ -889,3 +889,14 @@ body {
   padding: 4px 8px;
   border-bottom: 1px solid var(--border);
 }
+/* テンプレート由来セルの色分け */
+.teacher-cell-template {
+  background: #f0fdf4 !important;
+}
+
+.teacher-cell-badge {
+  font-size: 8px;
+  color: #15803d;
+  margin-top: 2px;
+  opacity: 0.8;
+}
