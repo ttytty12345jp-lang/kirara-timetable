@@ -171,7 +171,7 @@ body {
 
 .today-btn:hover { background: var(--primary); color: white; }
 
-/* ======== TIMETABLE（縦長コンパクト版） ======== */
+/* ======== TIMETABLE ======== */
 .table-scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -182,90 +182,100 @@ body {
 .timetable-table {
   border-collapse: collapse;
   font-size: 9px;
-  min-width: 100%;
   width: 100%;
+  table-layout: fixed; /* 画面幅に追従して均等分割 */
 }
 
 .timetable-table th {
   background: #2d3748;
   color: white;
-  padding: 3px 2px;
+  padding: 3px 1px;
   text-align: center;
   font-weight: 600;
   font-size: 9px;
   border: 1px solid #1a202c;
   white-space: nowrap;
+  overflow: hidden;
   line-height: 1.3;
 }
 
+/* クラス列: sticky固定 */
 .th-class-col {
-  min-width: 38px;
+  width: 34px;
+  min-width: 34px;
   background: #2d3748;
   position: sticky;
   left: 0;
   z-index: 3;
 }
 
+/* 種別列: sticky固定 */
 .th-kind-col {
-  min-width: 28px;
+  width: 24px;
+  min-width: 24px;
   background: #2d3748;
   position: sticky;
-  left: 38px;
+  left: 34px;
   z-index: 3;
 }
 
-.th-period-col {
-  min-width: 36px;
-}
+/* 時限列: 残り幅を均等分割 */
+.th-period-col { }
+.th-lunch-col { background: #3182ce; }
 
-.th-lunch-col {
-  background: #3182ce;
-}
-
+/* クラス列（rowspan=2） */
 .td-class-label {
   text-align: center;
-  padding: 2px;
+  vertical-align: middle;
   border: 1px solid var(--border);
-  min-width: 38px;
-  font-weight: 700;
-  font-size: 10px;
+  padding: 2px 1px;
   position: sticky;
   left: 0;
   z-index: 2;
+  width: 34px;
 }
 
 .class-label {
-  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
   line-height: 1.2;
 }
 
+/* 種別列（教科 / 教員） */
 .td-kind {
   text-align: center;
-  padding: 2px 1px;
   border: 1px solid var(--border);
-  min-width: 28px;
-  font-size: 8px;
-  font-weight: 600;
+  padding: 1px;
   position: sticky;
-  left: 38px;
+  left: 34px;
   z-index: 2;
+  width: 24px;
+  min-width: 24px;
 }
 
 .kind-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-muted);
   display: block;
   white-space: nowrap;
   line-height: 1.3;
 }
 
+/* データセル共通 */
 .timetable-cell {
   border: 1px solid var(--border);
-  padding: 1px 2px;
+  padding: 2px 1px;
+  text-align: center;
   vertical-align: middle;
-  transition: background-color 0.1s;
-  min-width: 36px;
-  height: 22px;
   cursor: pointer;
+  transition: background-color 0.1s;
+  overflow: hidden;
 }
 
 .timetable-cell:hover:not(.lunch-cell) {
@@ -273,23 +283,31 @@ body {
   outline-offset: -1px;
 }
 
-.lunch-cell {
-  cursor: default;
+.lunch-cell { cursor: default; }
+.lunch-cell:hover { outline: none; }
+
+/* 教科行と教員行の境界 */
+.class-subject-row td { border-bottom: none; }
+.class-teacher-row td { border-top: 1px dashed rgba(0,0,0,0.1); }
+
+/* クラス間の区切り */
+.class-subject-row .td-class-label,
+.class-subject-row .td-kind,
+.class-subject-row .timetable-cell {
+  border-top: 2px solid rgba(0,0,0,0.12);
 }
 
-.subject-cell, .teacher-cell {
-  text-align: center;
-}
+.subject-cell, .teacher-cell { text-align: center; }
 
 .cell-text {
   display: block;
   text-align: center;
-  line-height: 1.3;
+  line-height: 1.2;
   word-break: break-all;
 }
 
 .subject-text {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--text);
 }
@@ -300,14 +318,12 @@ body {
 }
 
 .lunch-text {
-  font-size: 9px;
-  color: #1e40af;
+  font-size: 8px;
+  color: #93c5fd;
   font-weight: 500;
 }
 
-.changed {
-  background: var(--changed-bg) !important;
-}
+.changed { background: var(--changed-bg) !important; }
 
 .cell-inline-input,
 .cell-inline-select {
@@ -326,9 +342,9 @@ body {
   border-color: var(--primary);
 }
 
-.eikani-row {
-  height: 20px;
-}
+.lunch-placeholder { height: 18px; border-radius: 2px; }
+
+.eikani-row { height: 20px; }
 
 /* ======== SAVE BUTTON ======== */
 .save-btn {
@@ -361,7 +377,7 @@ body {
 
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-  50% { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
+  50%       { box-shadow: 0 0 0 5px rgba(245, 158, 11, 0); }
 }
 
 .pending-dot {
@@ -526,7 +542,6 @@ body {
 .day-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
 .template-table-wrapper { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
-
 .template-table { border-collapse: collapse; width: 100%; font-size: 11px; }
 
 .template-table th {
@@ -551,15 +566,23 @@ body {
   background: white;
 }
 
+/* えい・かに / いるか用テンプレートテーブル */
+.template-table-special .td-row-label {
+  width: 32px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+  background: #f8fafc;
+}
+
+.template-table-special .td-period-sm { vertical-align: middle; }
+
 /* ======== STATS ======== */
 .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-
 .stat-card { background: var(--primary-light); border-radius: var(--radius); padding: 10px; text-align: center; }
-
 .stat-num { font-size: 20px; font-weight: 700; color: var(--primary); }
-
 .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-
 .hint-text { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
 
 /* ======== TOAST ======== */
@@ -584,159 +607,14 @@ body {
 }
 
 .toast-success { background: var(--success); }
-.toast-error { background: var(--danger); }
-.toast-icon { font-size: 13px; }
+.toast-error   { background: var(--danger); }
+.toast-icon    { font-size: 13px; }
 
 @keyframes slideUp {
   from { opacity: 0; transform: translateX(-50%) translateY(10px); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ======== RESPONSIVE ======== */
-@media (max-width: 600px) {
-  .header-sub { display: none; }
-  .legend-sep { display: none; }
-}
-
-@media (max-width: 400px) {
-  html { font-size: 12px; }
-  .th-class-col { min-width: 34px; }
-  .th-kind-col { min-width: 26px; left: 34px; }
-  .td-class-label { min-width: 34px; }
-  .td-kind { min-width: 26px; left: 34px; }
-}
-/* えい・かに / いるか用テンプレートテーブル */
-.template-table-special .td-row-label {
-  width: 32px;
-  text-align: center;
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 11px;
-  background: #f8fafc;
-}
-
-.template-table-special .td-period-sm {
-  vertical-align: middle;
-}
-/* ======== TEACHER SCHEDULE ======== */
-.teacher-schedule-preview {
-  margin-top: 12px;
-  padding: 10px;
-  background: #f8fafc;
-  border-radius: var(--radius);
-}
-
-.teacher-schedule-preview h3 {
-  font-size: 13px;
-  font-weight: 700;
-  margin-bottom: 10px;
-  color: var(--text);
-}
-
-.schedule-table-scroll {
-  overflow-x: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 10px;
-}
-
-.teacher-schedule-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 10px;
-  min-width: 600px;
-}
-
-.teacher-schedule-table th {
-  background: #2d3748;
-  color: white;
-  padding: 6px 4px;
-  text-align: center;
-  font-weight: 600;
-  border: 1px solid #1a202c;
-  line-height: 1.3;
-}
-
-.teacher-schedule-table td {
-  border: 1px solid var(--border);
-  padding: 6px 4px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.td-period-label {
-  background: #f1f5f9;
-  font-weight: 600;
-  color: var(--text-muted);
-  font-size: 10px;
-  min-width: 38px;
-}
-
-.schedule-cell {
-  background: white;
-  min-height: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.cell-class {
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--primary);
-}
-
-.cell-subject {
-  font-size: 9px;
-  color: var(--text);
-  margin-top: 2px;
-}
-
-.cell-empty {
-  color: var(--text-muted);
-  font-size: 10px;
-}
-
-.schedule-details {
-  margin-top: 10px;
-  padding: 8px;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.schedule-details summary {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 11px;
-  color: var(--primary);
-  padding: 6px;
-  user-select: none;
-}
-
-.schedule-details summary:hover {
-  text-decoration: underline;
-}
-
-.details-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 10px;
-  margin-top: 8px;
-}
-
-.details-table th {
-  background: #f1f5f9;
-  padding: 6px;
-  text-align: left;
-  font-weight: 600;
-  border-bottom: 1px solid var(--border);
-}
-
-.details-table td {
-  padding: 4px 6px;
-  border-bottom: 1px solid var(--border);
-}
 /* ======== TEACHER SCHEDULE EXPORT ======== */
 .teacher-preview {
   margin-top: 14px;
@@ -793,20 +671,9 @@ body {
   border: 1px solid #1a202c;
 }
 
-.th-period-fixed {
-  min-width: 38px;
-}
-
-.th-day {
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.th-date {
-  font-size: 9px;
-  opacity: 0.8;
-  margin-top: 2px;
-}
+.th-period-fixed { min-width: 38px; }
+.th-day  { font-size: 11px; font-weight: 700; }
+.th-date { font-size: 9px; opacity: 0.8; margin-top: 2px; }
 
 .td-period-fixed {
   background: #f1f5f9;
@@ -828,25 +695,18 @@ body {
   background: white;
 }
 
-.teacher-cell-filled {
-  background: #eff6ff;
-}
+.teacher-cell-filled   { background: #eff6ff; }
+.teacher-cell-template { background: #f0fdf4 !important; }
 
-.teacher-cell-class {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--primary);
-}
+.teacher-cell-class   { font-size: 10px; font-weight: 700; color: var(--primary); }
+.teacher-cell-subject { font-size: 9px; color: var(--text); margin-top: 2px; }
+.teacher-cell-empty   { color: #cbd5e1; font-size: 11px; }
 
-.teacher-cell-subject {
-  font-size: 9px;
-  color: var(--text);
+.teacher-cell-badge {
+  font-size: 8px;
+  color: #15803d;
   margin-top: 2px;
-}
-
-.teacher-cell-empty {
-  color: #cbd5e1;
-  font-size: 11px;
+  opacity: 0.8;
 }
 
 .teacher-details {
@@ -866,9 +726,7 @@ body {
   list-style: none;
 }
 
-.teacher-details summary:hover {
-  background: var(--primary-light);
-}
+.teacher-details summary:hover { background: var(--primary-light); }
 
 .teacher-detail-table {
   border-collapse: collapse;
@@ -889,14 +747,41 @@ body {
   padding: 4px 8px;
   border-bottom: 1px solid var(--border);
 }
-/* テンプレート由来セルの色分け */
-.teacher-cell-template {
-  background: #f0fdf4 !important;
+
+/* ======== RESPONSIVE ======== */
+@media (max-width: 600px) {
+  .header-sub  { display: none; }
+  .legend-sep  { display: none; }
+  .main-content { padding: 6px; gap: 10px; }
+  .timetable-section { padding: 8px 4px; }
+
+  /* スマホ: さらに縮小 */
+  .timetable-table { font-size: 8px; }
+
+  .th-class-col { width: 28px; min-width: 28px; }
+  .th-kind-col  { width: 20px; min-width: 20px; left: 28px; }
+
+  .td-class-label { width: 28px; }
+  .td-kind        { width: 20px; min-width: 20px; left: 28px; }
+
+  .class-label  { font-size: 8px; }
+  .kind-label   { font-size: 7px; }
+  .subject-text { font-size: 8px; }
+  .teacher-text { font-size: 7px; }
+  .lunch-text   { font-size: 7px; }
+
+  .timetable-cell { padding: 1px 0; }
 }
 
-.teacher-cell-badge {
-  font-size: 8px;
-  color: #15803d;
-  margin-top: 2px;
-  opacity: 0.8;
+@media (max-width: 400px) {
+  html { font-size: 12px; }
+
+  .th-class-col { width: 24px; min-width: 24px; }
+  .th-kind-col  { width: 18px; min-width: 18px; left: 24px; }
+
+  .td-class-label { width: 24px; }
+  .td-kind        { width: 18px; min-width: 18px; left: 24px; }
+
+  .template-selectors { gap: 10px; }
+  .day-btn { padding: 4px 8px; font-size: 12px; }
 }
