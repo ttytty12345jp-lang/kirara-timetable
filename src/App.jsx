@@ -16,7 +16,15 @@ import {
 } from "./utils/constants";
 
 export default function App() {
-  const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
+ const [memoText, setMemoText] = useState(() => {
+    return localStorage.getItem("kirara_memo") || "";
+  });
+
+  // メモが書き換えられたら、自動的にブラウザに保存する
+  useEffect(() => {
+    localStorage.setItem("kirara_memo", memoText);
+  }, [memoText]); const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
+  const [memoText, setMemoText] = useState("");
   const [toast, setToast] = useState(null);
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
@@ -60,6 +68,15 @@ export default function App() {
           onDateChange={setSelectedDate}
           dayOfWeek={dayOfWeek}
         />
+        <div className="memo-section">
+         <textarea 
+          className="memo-textarea" 
+          placeholder="連絡事項やメモを自由に入力できます..."
+          rows={2}
+          value={memoText} // 状態と連動
+          onChange={(e) => setMemoText(e.target.value)} // 文字が入力されたら状態を更新
+        />
+      </div> 
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
