@@ -16,18 +16,28 @@ import {
 } from "./utils/constants";
 
 export default function App() {
- const [memoText, setMemoText] = useState(() => {
-    return localStorage.getItem("kirara_memo") || "";
-  });
-
-  // メモが書き換えられたら、自動的にブラウザに保存する
-  useEffect(() => {
-    localStorage.setItem("kirara_memo", memoText);
-  }, [memoText]);
+// 1. 日付の状態
   const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
+
+  // 2. メモの状態（初期値は空にしておき、useEffectで読み込みます）
+  const [memoText, setMemoText] = useState("");
+
+  // 3. 【修正】日付が変わったら、その日のメモをlocalStorageから読み込む仕組み
+  useEffect(() => {
+    const savedMemo = localStorage.getItem(`kirara_memo_${selectedDate}`) || "";
+    setMemoText(savedMemo);
+  }, [selectedDate]);
+
+  // 4. 【修正】文字が入力されたら、その日付専用のキーで自動保存する仕組み
+  useEffect(() => {
+    if (selectedDate) {
+      localStorage.setItem(`kirara_memo_${selectedDate}`, memoText);
+    }
+  }, [memoText, selectedDate]);
+
+  // 5. その他の既存の状態（トーストやストレージなど）
   const [toast, setToast] = useState(null);
   const { data, saveRecord, deleteRecord, loading } = useStorage();
-
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2500);
