@@ -19,27 +19,39 @@ export default function App() {
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
   // ==========================================
-  // 💡 メモ用のリアルタイム同期処理（スムーズ入力版）
+  // 💡 メモ用のリアルタイム同期処理（配列データ構造対応版）
   // ==========================================
-  const currentDayData = data?.[selectedDate] || {};
-  const serverMemo = currentDayData.memo || "";
+  
+  // 配列（data）の中から、現在の日付、かつ「config_key が memo」となっているレコードをピンポイントで探す
+  const memoRecord = Array.isArray(data) 
+    ? data.find(r => r.date === selectedDate && r.config_key === "memo") 
+    : null;
+    
+  const serverMemo = memoRecord?.config_value || "";
 
   // 入力中の文字を一時的にキープするローカルな状態
   const [localMemo, setLocalMemo] = useState("");
 
-  // 日付が切り替わったり、PC・スマホ間でサーバーデータが更新されたら、入力欄を同期する
+  // 日付が変わったり、他端末（PC等）で保存されてサーバーデータが更新されたら、入力欄の文字を同期する
   useEffect(() => {
     setLocalMemo(serverMemo);
   }, [serverMemo, selectedDate]);
 
-  // 入力欄から手が離れた（フォーカスが外れた）瞬間にサーバーへ自動保存し、他端末へ同期する
+  // 入力欄から手が離れた（フォーカスが外れた）瞬間に、時間割の仕組み（saveRecord）を使ってサーバーへ直接保存する
   const syncMemoWithServer = async (text) => {
-    const currentTimetable = currentDayData.timetable || currentDayData;
-    await saveRecord(selectedDate, {
-      ...currentDayData,
-      timetable: currentTimetable,
-      memo: text
-    });
+    // 前後の余計な空白を消して、もしサーバーの値と全く同じなら通信しない
+    if (text.trim() === serverMemo.trim()) return;
+
+    // 時間割の管理レコード（saveRecord）の形式に完全に合わせる
+    const recordToSave = {
+      ...(memoRecord || {}),       // 既存のレコードがあればIDなどを引き継ぐ
+      date: selectedDate,          // 対象の日付
+      config_key: "memo",          // メモであることを示す識別子
+      config_value: text,          // 入力されたテキスト内容
+      class_name: "CONFIG"         // 他のデータと混ざらないためのタイプ設定
+    };
+
+    await saveRecord(selectedDate, recordToSave);
   };
 
   // ==========================================
