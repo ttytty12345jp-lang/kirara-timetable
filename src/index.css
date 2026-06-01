@@ -811,3 +811,46 @@ body {
   line-height: 1.0 !important;   /* 行間を詰める */
   border-width: 1px !important;  /* 枠線を細くしてスッキリさせる */
 }
+/* ==========================================
+   日付と表の間の「自由記述欄」スタイル（横幅・余白調整版）
+   ========================================== */
+.memo-section {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 10px;               /* 時間割セクション（timetable-section）と同じ余白にする */
+  width: 100%;                 /* 全幅に広げて親要素に合わせる */
+  box-sizing: border-box;
+}
+
+.memo-textarea {
+  width: 100%;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  resize: vertical;
+  min-height: 42px;
+  background: #f8fafc;
+  transition: all 0.15s ease;
+  display: block;              /* 余計な隙間を生まないようにブロック化 */
+  box-sizing: border-box;      /* paddingが横幅を突き破らないように固定 */
+}
+
+.memo-textarea:focus {
+  outline: none;
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+/* スマホ（横幅が狭い画面）での微調整 */
+@media (max-width: 600px) {
+  .memo-section {
+    /* スマホ版の時間割セクションの縮小ルール（padding: 8px 4px）に完全に同期させる */
+    padding: 8px 4px; 
+  }
+}
