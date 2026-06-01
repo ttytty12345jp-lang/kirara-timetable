@@ -220,7 +220,6 @@ body {
 }
 
 /* 時限列: 残り幅を均等分割 */
-.th-period-col { }
 .th-lunch-col { background: #3182ce; }
 
 /* クラス列（rowspan=2） */
@@ -270,12 +269,13 @@ body {
 /* データセル共通 */
 .timetable-cell {
   border: 1px solid var(--border);
-  padding: 2px 1px;
+  padding: 0px 1px;
   text-align: center;
   vertical-align: middle;
   cursor: pointer;
   transition: background-color 0.1s;
   overflow: hidden;
+  hieght: auto;
 }
 
 .timetable-cell:hover:not(.lunch-cell) {
@@ -313,8 +313,10 @@ body {
 }
 
 .teacher-text {
-  font-size: 8px;
+  font-size: 7.5px;
   color: var(--text-muted);
+  line-height: 1.0;
+  display: block;
 }
 
 .lunch-text {
@@ -767,10 +769,13 @@ body {
   .class-label  { font-size: 8px; }
   .kind-label   { font-size: 7px; }
   .subject-text { font-size: 8px; }
-  .teacher-text { font-size: 7px; }
+  .teacher-text { font-size: 7px; line-height: 1.0; }
   .lunch-text   { font-size: 7px; }
 
-  .timetable-cell { padding: 1px 0; }
+  .timetable-cell { padding:  0; }
+  .class-teacher-row .timetable-cell{
+    height: 12ptx;
+  }
 }
 
 @media (max-width: 400px) {
