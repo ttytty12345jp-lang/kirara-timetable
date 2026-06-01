@@ -275,7 +275,7 @@ body {
   cursor: pointer;
   transition: background-color 0.1s;
   overflow: hidden;
-  hieght: auto;
+  height: auto;
 }
 
 .timetable-cell:hover:not(.lunch-cell) {
@@ -789,4 +789,25 @@ body {
 
   .template-selectors { gap: 10px; }
   .day-btn { padding: 4px 8px; font-size: 12px; }
+}
+/* ==========================================
+   教員欄の入力フォームを限界まで低くする修正
+   ========================================== */
+
+/* 1. 教員の行全体・セル全体の余白をゼロにして高さを極小にする */
+.class-teacher-row, 
+.class-teacher-row td, 
+.class-teacher-row .timetable-cell {
+  height: 12px !important;
+  padding: 0 !important;
+}
+
+/* 2. セルの中にある入力欄（input / select）自体の高さを限界まで低くする */
+.class-teacher-row .cell-inline-input,
+.class-teacher-row .cell-inline-select {
+  height: 12px !important;       /* 高さを12pxに制限 */
+  font-size: 7.5px !important;    /* 文字を少し小さく */
+  padding: 0px 2px !important;   /* 入力欄の中の上下余白を完全にゼロに */
+  line-height: 1.0 !important;   /* 行間を詰める */
+  border-width: 1px !important;  /* 枠線を細くしてスッキリさせる */
 }
