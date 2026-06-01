@@ -16,33 +16,30 @@ import {
 } from "./utils/constants";
 
 export default function App() {
-// 1. 日付の状態
   const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
-
-  // 2. メモの状態（初期値は空にしておき、useEffectで読み込みます）
-  const [memoText, setMemoText] = useState("");
-
-  // 3. 【修正】日付が変わったら、その日のメモをlocalStorageから読み込む仕組み
-  useEffect(() => {
-    const savedMemo = localStorage.getItem(`kirara_memo_${selectedDate}`) || "";
-    setMemoText(savedMemo);
-  }, [selectedDate]);
-
-  // 4. 【修正】文字が入力されたら、その日付専用のキーで自動保存する仕組み
-  useEffect(() => {
-    if (selectedDate) {
-      localStorage.setItem(`kirara_memo_${selectedDate}`, memoText);
-    }
-  }, [memoText, selectedDate]);
-
-  // 5. その他の既存の状態（トーストやストレージなど）
   const [toast, setToast] = useState(null);
   const { data, saveRecord, deleteRecord, loading } = useStorage();
+
+  // --- 💡 メモ用のリアルタイム同期処理 ---
+  const currentDayData = data?.[selectedDate] || {};
+  const memoText = currentDayData.memo || "";
+
+  const handleMemoChange = async (newText) => {
+    const currentTimetable = currentDayData.timetable || currentDayData;
+    await saveRecord(selectedDate, {
+      ...currentDayData,
+      timetable: currentTimetable,
+      memo: newText
+    });
+  };
+
+  // --- 💡 通知（トースト）を出すための関数（壊れていた部分を修正） ---
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2500);
   }, []);
 
+  // --- 💡 曜日を取得する処理 ---
   const dayOfWeek = getDayOfWeek(selectedDate);
 
   // Get current timetable data for selected date
@@ -79,14 +76,14 @@ export default function App() {
           dayOfWeek={dayOfWeek}
         />
         <div className="memo-section">
-         <textarea 
-          className="memo-textarea" 
-          placeholder="連絡事項やメモを自由に入力できます..."
-          rows={2}
-          value={memoText} // 状態と連動
-          onChange={(e) => setMemoText(e.target.value)} // 文字が入力されたら状態を更新
-        />
-      </div> 
+          <textarea 
+            className="memo-textarea" 
+            placeholder="連絡事項やメモを自由に入力できます..."
+            rows={2}
+            value={memoText} // ➔ サーバーから同期された文字が自動で表示されます
+            onChange={(e) => handleMemoChange(e.target.value)} // ➔ 【修正】文字を打った瞬間にリアルタイムでPCと同期保存されます
+          />
+        </div>
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
