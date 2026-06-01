@@ -3,15 +3,23 @@ import { getDateString } from "../utils/constants";
 export default function DatePicker({ selectedDate, onDateChange, dayOfWeek }) {
   const today = getDateString(new Date());
 
-  function prevDay() {
-    const d = new Date(selectedDate + "T00:00:00");
-    d.setDate(d.getDate() - 1);
-    onDateChange(getDateString(d));
-  }
+  // ➔ 画面の「input（日付欄）」の値をその場で直接読み取って安全に計算する関数
+  function handleNav(direction) {
+    // 画面上のinput要素から、現在確実に入力されている日付文字列を取得します
+    const inputEl = document.querySelector(".date-input");
+    const currentStr = inputEl ? inputEl.value : selectedDate;
 
-  function nextDay() {
-    const d = new Date(selectedDate + "T00:00:00");
-    d.setDate(d.getDate() + 1);
+    // タイムゾーンのズレを防ぐため、お昼の12時を基準にオブジェクトを作成
+    const d = new Date(currentStr + "T12:00:00");
+    
+    // directionが "prev" なら -1日、"next" なら +1日 する
+    if (direction === "prev") {
+      d.setDate(d.getDate() - 1);
+    } else {
+      d.setDate(d.getDate() + 1);
+    }
+
+    // 計算した日付を確実に上の階層（App.jsx）に伝える
     onDateChange(getDateString(d));
   }
 
@@ -20,7 +28,8 @@ export default function DatePicker({ selectedDate, onDateChange, dayOfWeek }) {
   return (
     <section className="date-section">
       <div className="date-picker-row">
-        <button className="date-nav-btn" onClick={prevDay} aria-label="前の日">
+        {/* 左ボタン */}
+        <button className="date-nav-btn" onClick={() => handleNav("prev")} aria-label="前の日">
           ‹
         </button>
         <div className="date-center">
@@ -37,7 +46,8 @@ export default function DatePicker({ selectedDate, onDateChange, dayOfWeek }) {
             <span className="today-badge">今日</span>
           )}
         </div>
-        <button className="date-nav-btn" onClick={nextDay} aria-label="次の日">
+        {/* 右ボタン */}
+        <button className="date-nav-btn" onClick={() => handleNav("next")} aria-label="次の日">
           ›
         </button>
       </div>
