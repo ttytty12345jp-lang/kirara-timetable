@@ -19,45 +19,42 @@ export default function App() {
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
   // ==========================================
-  // 💡 メモ用の処理（1コマ目のデータに完全結合版）
+  // 💡 メモ用の処理（Supabaseのconfig_keyルールに完全準拠）
   // ==========================================
   
-  // 今日の時間割データを取得
-  const todayRows = Array.isArray(data)
-    ? data.filter(r => r.date === selectedDate && r.class_name && !r.config_key && r.class_name !== "DAY_TEMPLATE")
-    : [];
+  // 日付ごとの一意なキーを作成（例: "memo_2026-06-01"）
+  const memoConfigKey = `memo_${selectedDate}`;
 
-  // 今日の「1コマ目のデータ」の中に保存されているメモ文字列を読み出す
-  const serverMemo = todayRows[0]?.memo || "";
+  // 全データ（data）の中から、この日付のメモレコードをピンポイントで検索
+  const memoRecord = Array.isArray(data)
+    ? data.find(r => r.config_key === memoConfigKey)
+    : null;
+
+  const serverMemo = memoRecord?.config_value || "";
 
   // 入力中の文字を保持する状態
   const [localMemo, setLocalMemo] = useState("");
 
-  // サーバーのデータ（他端末での保存など）が更新されたら、入力欄の文字を同期する
+  // 日付の変更や、他端末（PC/スマホ）での更新を検知して、入力欄にリアルタイム反映
   useEffect(() => {
     setLocalMemo(serverMemo);
   }, [serverMemo, selectedDate]);
 
-  // 【最重要】時間割の保存ボタンが押されたとき、送信されるデータの一番最初のマス（1コマ目）にメモを埋め込む
-  const handleSaveWithMemo = useCallback(async (date, recordData) => {
-    let finalData = recordData;
+  // 入力欄から手が離れた（フォーカスが外れた）瞬間に、大元のルールに乗せて単発で保存
+  const syncMemoWithServer = async (text) => {
+    if (text.trim() === serverMemo.trim()) return;
 
-    if (Array.isArray(recordData) && recordData.length > 0) {
-      // 送信される時間割データの「配列の1番最初（[0]）」のオブジェクトに memo プロパティを追加
-      finalData = recordData.map((row, index) => {
-        if (index === 0) {
-          return { ...row, memo: localMemo }; // 1コマ目にメモを結合
-        }
-        return row;
-      });
-    } else if (recordData && typeof recordData === 'object') {
-      // オブジェクト単体で送られてくる場合
-      finalData = { ...recordData, memo: localMemo };
-    }
+    // useStorageの「record.config_key」の分岐に100%適合するオブジェクトを作成
+    const memoData = {
+      config_key: memoConfigKey,  // ➔ これがあるため、大元のif文の1番目を通過します
+      config_value: text,
+      date: selectedDate,         // 念のため日付も保持
+      class_name: "CONFIG"
+    };
 
-    // 既存の時間割保存処理へそのまま流す（これでデータベースは拒絶反応を起こしません）
-    await saveRecord(date, finalData);
-  }, [saveRecord, localMemo]);
+    // 大元の saveRecord 関数をそのまま呼び出す
+    await saveRecord(memoData);
+  };
 
   // ==========================================
   // 既存の通知（トースト）関数
@@ -98,20 +95,19 @@ export default function App() {
   const specialSubjects = (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean);
 
   // ==========================================
-  // 画面のレイアウト構成（HTML / JSX）
+  // 画面のレイアウト構成
   // ==========================================
   return (
     <div className="app">
       <Header />
       <main className="main-content">
-        {/* 日付選択 */}
         <DatePicker
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           dayOfWeek={dayOfWeek}
         />
         
-        {/* 日記型メモ欄 */}
+        {/* 📝 新・メモ自動同期欄 */}
         <div className="memo-section">
           <textarea 
             className="memo-textarea" 
@@ -119,10 +115,10 @@ export default function App() {
             rows={2}
             value={localMemo}
             onChange={(e) => setLocalMemo(e.target.value)}
+            onBlur={(e) => syncMemoWithServer(e.target.value)} // ➔ 入力欄から離れたら即保存！
           />
         </div>
-
-        {/* 時間割表本体 */}
+        
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
@@ -131,12 +127,11 @@ export default function App() {
           subjects={subjects}
           teachers={teachers}
           specialSubjects={specialSubjects}
-          onSave={handleSaveWithMemo} // ➔ メモを1コマ目に隠し持って保存
+          onSave={saveRecord} // ➔ 元通りの関数に戻しました
           onShowToast={showToast}
           allData={data}
         />
-
-        {/* 設定画面 */}
+        
         <SettingsSection
           subjects={subjects}
           teachers={teachers}
