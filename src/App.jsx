@@ -19,44 +19,44 @@ export default function App() {
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
   // ==========================================
-  // 💡 メモ用の処理（時間割の1マスのデータに相乗り版）
+  // 💡 メモ用の処理（1コマ目のデータに完全結合版）
   // ==========================================
   
-  // その日の時間割データ（配列）を取得する
-  const dayRecords = Array.isArray(data)
-    ? data.filter(r => r.date === selectedDate && r.class_name && !r.config_key)
+  // 今日の時間割データを取得
+  const todayRows = Array.isArray(data)
+    ? data.filter(r => r.date === selectedDate && r.class_name && !r.config_key && r.class_name !== "DAY_TEMPLATE")
     : [];
 
-  // その日の「最初の1マス（なんでもOK）」の memo カラムから文字を読み出す
-  const serverMemo = dayRecords[0]?.memo || "";
+  // 今日の「1コマ目のデータ」の中に保存されているメモ文字列を読み出す
+  const serverMemo = todayRows[0]?.memo || "";
 
   // 入力中の文字を保持する状態
   const [localMemo, setLocalMemo] = useState("");
 
-  // サーバーのデータが変わったら入力欄に反映
+  // サーバーのデータ（他端末での保存など）が更新されたら、入力欄の文字を同期する
   useEffect(() => {
     setLocalMemo(serverMemo);
   }, [serverMemo, selectedDate]);
 
-  // 時間割の保存ボタンが押されたとき、すべてのコマのデータにこのメモを書き込んで一緒に保存する
+  // 【最重要】時間割の保存ボタンが押されたとき、送信されるデータの一番最初のマス（1コマ目）にメモを埋め込む
   const handleSaveWithMemo = useCallback(async (date, recordData) => {
-    if (Array.isArray(recordData)) {
-      // 送信される時間割のすべてのコマに memo: localMemo を合流させる
-      const updatedData = recordData.map(row => ({
-        ...row,
-        memo: localMemo
-      }));
-      await saveRecord(date, updatedData);
-    } else if (recordData && typeof recordData === 'object') {
-      // オブジェクト形式で送られている場合
-      await saveRecord(date, {
-        ...recordData,
-        memo: localMemo
+    let finalData = recordData;
+
+    if (Array.isArray(recordData) && recordData.length > 0) {
+      // 送信される時間割データの「配列の1番最初（[0]）」のオブジェクトに memo プロパティを追加
+      finalData = recordData.map((row, index) => {
+        if (index === 0) {
+          return { ...row, memo: localMemo }; // 1コマ目にメモを結合
+        }
+        return row;
       });
-    } else {
-      // それ以外の場合もそのまま渡す
-      await saveRecord(date, recordData);
+    } else if (recordData && typeof recordData === 'object') {
+      // オブジェクト単体で送られてくる場合
+      finalData = { ...recordData, memo: localMemo };
     }
+
+    // 既存の時間割保存処理へそのまま流す（これでデータベースは拒絶反応を起こしません）
+    await saveRecord(date, finalData);
   }, [saveRecord, localMemo]);
 
   // ==========================================
@@ -98,19 +98,20 @@ export default function App() {
   const specialSubjects = (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean);
 
   // ==========================================
-  // 画面のレイアウト構成
+  // 画面のレイアウト構成（HTML / JSX）
   // ==========================================
   return (
     <div className="app">
       <Header />
       <main className="main-content">
+        {/* 日付選択 */}
         <DatePicker
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           dayOfWeek={dayOfWeek}
         />
         
-        {/* メモ欄 */}
+        {/* 日記型メモ欄 */}
         <div className="memo-section">
           <textarea 
             className="memo-textarea" 
@@ -121,6 +122,7 @@ export default function App() {
           />
         </div>
 
+        {/* 時間割表本体 */}
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
@@ -129,11 +131,12 @@ export default function App() {
           subjects={subjects}
           teachers={teachers}
           specialSubjects={specialSubjects}
-          onSave={handleSaveWithMemo} // ➔ メモを相乗りさせて保存
+          onSave={handleSaveWithMemo} // ➔ メモを1コマ目に隠し持って保存
           onShowToast={showToast}
           allData={data}
         />
 
+        {/* 設定画面 */}
         <SettingsSection
           subjects={subjects}
           teachers={teachers}
