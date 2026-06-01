@@ -20,70 +20,75 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
-  // --- 💡 メモ用のリアルタイム同期処理 ---
+  // ==========================================
+  // 💡 メモ用のリアルタイム同期処理（スムーズ入力版）
+  // ==========================================
   const currentDayData = data?.[selectedDate] || {};
-  const memoText = currentDayData.memo || "";
+  const serverMemo = currentDayData.memo || "";
 
-  const handleMemoChange = async (newText) => {
+  // 入力中の文字を一時的にキープする状態
+  const [localMemo, setLocalMemo] = useState("");
+
+  // 日付が変わったり、他端末（PC等）で更新されたら、入力欄の文字を同期する
+  useEffect(() => {
+    setLocalMemo(serverMemo);
+  }, [serverMemo, selectedDate]);
+
+  // 入力欄から手が離れた（フォーカスが外れた）瞬間にサーバーへ保存・PCへ同期する
+  const syncMemoWithServer = async (text) => {
     const currentTimetable = currentDayData.timetable || currentDayData;
     await saveRecord(selectedDate, {
       ...currentDayData,
       timetable: currentTimetable,
-      memo: newText
+      memo: text
     });
   };
 
-  // --- 💡 通知（トースト）を出すための関数（壊れていた部分を修正） ---
+  // ==========================================
+  // 既存の共通処理（通知・曜日・データ取得）
+  // ==========================================
   const showToast = useCallback((msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2500);
   }, []);
 
-  // --- 💡 曜日を取得する処理 ---
   const dayOfWeek = getDayOfWeek(selectedDate);
 
-  // Get current timetable data for selected date
-  const getDayData = useCallback((date) => {
-    return data.filter(r => r.date === date && r.class_name && !r.config_key && r.class_name !== "DAY_TEMPLATE");
-  }, [data]);
+  const getDayData = (date) => {
+    return data?.[date]?.timetable || data?.[date] || null;
+  };
 
-  // Get template data for a day of week
-  const getTemplateData = useCallback((day, className) => {
-    return data.filter(r =>
-      r.class_name === "DAY_TEMPLATE" &&
-      r.day_template_day === day &&
-      r.day_template_class === className
-    );
-  }, [data]);
+  const getTemplateData = (dayStr) => {
+    return data?.templates?.[dayStr] || null;
+  };
 
-  // Get config value
-  const getConfig = useCallback((key) => {
-    const rec = data.find(r => r.config_key === key);
-    return rec?.config_value || null;
-  }, [data]);
-
-  const subjects = (getConfig("subjects_list") || DEFAULT_SUBJECTS.join(",")).split(",").filter(Boolean);
-  const teachers = (getConfig("teachers_list") || DEFAULT_TEACHERS.join(",")).split(",").filter(Boolean);
-  const specialSubjects = (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean);
-
+  // ==========================================
+  // 画面の見た目（HTML / JSX）
+  // ==========================================
   return (
     <div className="app">
       <Header />
       <main className="main-content">
+        {/* 日付選択 */}
         <DatePicker
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           dayOfWeek={dayOfWeek}
         />
+        
+        {/* 自由記述欄（メモ欄） */}
         <div className="memo-section">
           <textarea 
             className="memo-textarea" 
             placeholder="連絡事項やメモを自由に入力できます..."
             rows={2}
-            value={memoText} // ➔ サーバーから同期された文字が自動で表示されます
-            onChange={(e) => handleMemoChange(e.target.value)} // ➔ 【修正】文字を打った瞬間にリアルタイムでPCと同期保存されます
+            value={localMemo}
+            onChange={(e) => setLocalMemo(e.target.value)}
+            onBlur={(e) => syncMemoWithServer(e.target.value)}
           />
-        </div>
+        </div> 
+
+        {/* 時間割の表本体 */}
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
@@ -96,6 +101,8 @@ export default function App() {
           onShowToast={showToast}
           allData={data}
         />
+
+        {/* 設定エリア */}
         <SettingsSection
           subjects={subjects}
           teachers={teachers}
@@ -109,6 +116,8 @@ export default function App() {
           allData={data}
         />
       </main>
+      
+      {/* 通知トースト */}
       {toast && <Toast message={toast.msg} type={toast.type} />}
     </div>
   );
