@@ -19,43 +19,45 @@ export default function App() {
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
   // ==========================================
-  // 💡 メモ用の処理（時間割データ構造・完全同期版）
+  // 💡 メモ用の処理（時間割の1マスのデータに相乗り版）
   // ==========================================
   
-  // 配列（data）の中から、現在の日付、かつ「config_key が memo_text」となっているレコードを探す
-  const memoRecord = Array.isArray(data) 
-    ? data.find(r => r.date === selectedDate && r.config_key === "memo_text") 
-    : null;
-    
-  const serverMemo = memoRecord?.config_value || "";
+  // その日の時間割データ（配列）を取得する
+  const dayRecords = Array.isArray(data)
+    ? data.filter(r => r.date === selectedDate && r.class_name && !r.config_key)
+    : [];
 
-  // 入力中の文字を一時的にキープするローカルな状態
+  // その日の「最初の1マス（なんでもOK）」の memo カラムから文字を読み出す
+  const serverMemo = dayRecords[0]?.memo || "";
+
+  // 入力中の文字を保持する状態
   const [localMemo, setLocalMemo] = useState("");
 
-  // 日付が変わったり、他端末（PC等）で保存されてサーバーデータが更新されたら、入力欄の文字を同期する
+  // サーバーのデータが変わったら入力欄に反映
   useEffect(() => {
     setLocalMemo(serverMemo);
   }, [serverMemo, selectedDate]);
 
-  // 【重要】時間割の保存システム（saveRecord）にメモも相乗りさせて保存する関数
+  // 時間割の保存ボタンが押されたとき、すべてのコマのデータにこのメモを書き込んで一緒に保存する
   const handleSaveWithMemo = useCallback(async (date, recordData) => {
-    // もし保存しようとしているデータが「時間割のデータ（配列など）」だった場合
-    // そのデータとは別に、メモ用のレコードも同時に保存させる、またはデータ内に含めます
-    
-    // 1. まずは本来の時間割データをそのまま保存
-    await saveRecord(date, recordData);
-
-    // 2. 続いて、今画面に入力されているメモ欄のテキストも同じ日付でサーバーに保存
-    const memoRecordToSave = {
-      id: memoRecord?.id,               // 既存レコードがあればIDを引き継ぐ
-      date: date,                       // 対象の日付
-      config_key: "memo_text",          // メモ用の識別キー
-      config_value: localMemo,          // 今入力されているテキスト
-      class_name: "CONFIG"              // システム設定用タイプ
-    };
-
-    await saveRecord(date, memoRecordToSave);
-  }, [saveRecord, memoRecord, localMemo]);
+    if (Array.isArray(recordData)) {
+      // 送信される時間割のすべてのコマに memo: localMemo を合流させる
+      const updatedData = recordData.map(row => ({
+        ...row,
+        memo: localMemo
+      }));
+      await saveRecord(date, updatedData);
+    } else if (recordData && typeof recordData === 'object') {
+      // オブジェクト形式で送られている場合
+      await saveRecord(date, {
+        ...recordData,
+        memo: localMemo
+      });
+    } else {
+      // それ以外の場合もそのまま渡す
+      await saveRecord(date, recordData);
+    }
+  }, [saveRecord, localMemo]);
 
   // ==========================================
   // 既存の通知（トースト）関数
@@ -96,20 +98,19 @@ export default function App() {
   const specialSubjects = (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean);
 
   // ==========================================
-  // 画面のレイアウト構成（HTML / JSX）
+  // 画面のレイアウト構成
   // ==========================================
   return (
     <div className="app">
       <Header />
       <main className="main-content">
-        {/* 日付選択 */}
         <DatePicker
           selectedDate={selectedDate}
           onDateChange={setSelectedDate}
           dayOfWeek={dayOfWeek}
         />
         
-        {/* 日記型メモ欄（時間割の保存ボタンと連動してPC・スマホ間で完全共有） */}
+        {/* メモ欄 */}
         <div className="memo-section">
           <textarea 
             className="memo-textarea" 
@@ -120,7 +121,6 @@ export default function App() {
           />
         </div>
 
-        {/* 時間割表本体 */}
         <TimetableGrid
           selectedDate={selectedDate}
           dayOfWeek={dayOfWeek}
@@ -129,12 +129,11 @@ export default function App() {
           subjects={subjects}
           teachers={teachers}
           specialSubjects={specialSubjects}
-          onSave={handleSaveWithMemo} // ➔ 【修正】メモも一緒に保存する新しい関数に変更
+          onSave={handleSaveWithMemo} // ➔ メモを相乗りさせて保存
           onShowToast={showToast}
           allData={data}
         />
 
-        {/* 設定画面 */}
         <SettingsSection
           subjects={subjects}
           teachers={teachers}
