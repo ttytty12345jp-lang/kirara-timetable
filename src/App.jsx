@@ -19,12 +19,12 @@ export default function App() {
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
   // ==========================================
-  // 💡 メモ用のリアルタイム同期処理（配列データ構造対応版）
+  // 💡 メモ用の処理（時間割データ構造・完全同期版）
   // ==========================================
   
-  // 配列（data）の中から、現在の日付、かつ「config_key が memo」となっているレコードをピンポイントで探す
+  // 配列（data）の中から、現在の日付、かつ「config_key が memo_text」となっているレコードを探す
   const memoRecord = Array.isArray(data) 
-    ? data.find(r => r.date === selectedDate && r.config_key === "memo") 
+    ? data.find(r => r.date === selectedDate && r.config_key === "memo_text") 
     : null;
     
   const serverMemo = memoRecord?.config_value || "";
@@ -37,22 +37,25 @@ export default function App() {
     setLocalMemo(serverMemo);
   }, [serverMemo, selectedDate]);
 
-  // 入力欄から手が離れた（フォーカスが外れた）瞬間に、時間割の仕組み（saveRecord）を使ってサーバーへ直接保存する
-  const syncMemoWithServer = async (text) => {
-    // 前後の余計な空白を消して、もしサーバーの値と全く同じなら通信しない
-    if (text.trim() === serverMemo.trim()) return;
+  // 【重要】時間割の保存システム（saveRecord）にメモも相乗りさせて保存する関数
+  const handleSaveWithMemo = useCallback(async (date, recordData) => {
+    // もし保存しようとしているデータが「時間割のデータ（配列など）」だった場合
+    // そのデータとは別に、メモ用のレコードも同時に保存させる、またはデータ内に含めます
+    
+    // 1. まずは本来の時間割データをそのまま保存
+    await saveRecord(date, recordData);
 
-    // 時間割の管理レコード（saveRecord）の形式に完全に合わせる
-    const recordToSave = {
-      ...(memoRecord || {}),       // 既存のレコードがあればIDなどを引き継ぐ
-      date: selectedDate,          // 対象の日付
-      config_key: "memo",          // メモであることを示す識別子
-      config_value: text,          // 入力されたテキスト内容
-      class_name: "CONFIG"         // 他のデータと混ざらないためのタイプ設定
+    // 2. 続いて、今画面に入力されているメモ欄のテキストも同じ日付でサーバーに保存
+    const memoRecordToSave = {
+      id: memoRecord?.id,               // 既存レコードがあればIDを引き継ぐ
+      date: date,                       // 対象の日付
+      config_key: "memo_text",          // メモ用の識別キー
+      config_value: localMemo,          // 今入力されているテキスト
+      class_name: "CONFIG"              // システム設定用タイプ
     };
 
-    await saveRecord(selectedDate, recordToSave);
-  };
+    await saveRecord(date, memoRecordToSave);
+  }, [saveRecord, memoRecord, localMemo]);
 
   // ==========================================
   // 既存の通知（トースト）関数
@@ -106,7 +109,7 @@ export default function App() {
           dayOfWeek={dayOfWeek}
         />
         
-        {/* 日記型メモ欄（入力は快適に、離れたらPC/スマホ間を即時リアルタイム同期） */}
+        {/* 日記型メモ欄（時間割の保存ボタンと連動してPC・スマホ間で完全共有） */}
         <div className="memo-section">
           <textarea 
             className="memo-textarea" 
@@ -114,7 +117,6 @@ export default function App() {
             rows={2}
             value={localMemo}
             onChange={(e) => setLocalMemo(e.target.value)}
-            onBlur={(e) => syncMemoWithServer(e.target.value)}
           />
         </div>
 
@@ -127,7 +129,7 @@ export default function App() {
           subjects={subjects}
           teachers={teachers}
           specialSubjects={specialSubjects}
-          onSave={saveRecord}
+          onSave={handleSaveWithMemo} // ➔ 【修正】メモも一緒に保存する新しい関数に変更
           onShowToast={showToast}
           allData={data}
         />
