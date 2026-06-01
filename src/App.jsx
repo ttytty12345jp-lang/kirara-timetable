@@ -23,8 +23,8 @@ export default function App() {
   // メモが書き換えられたら、自動的にブラウザに保存する
   useEffect(() => {
     localStorage.setItem("kirara_memo", memoText);
-  }, [memoText]); const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
-  const [memoText, setMemoText] = useState("");
+  }, [memoText]);
+  const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [toast, setToast] = useState(null);
   const { data, saveRecord, deleteRecord, loading } = useStorage();
 
