@@ -49,13 +49,18 @@ export const SPECIAL_CLASS_COLOR = "#e0e7ff";
 
 export const DAYS = ["月", "火", "水", "木", "金"];
 
+// ⭐【最重要・修正】世界標準時(UTC)を使わず、日本時間のまま「YYYY-MM-DD」の文字列を作ります
 export function getDateString(date) {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
+// ⭐【修正】こちらもタイムゾーンのズレを絶対に起こさないよう、お昼12時基準に統一します
 export function getDayOfWeek(dateStr) {
   const days = ["日", "月", "火", "水", "木", "金", "土"];
-  const d = new Date(dateStr + "T00:00:00");
+  const d = new Date(dateStr + "T12:00:00");
   return days[d.getDay()];
 }
 
@@ -79,5 +84,6 @@ export function getBasePeriod(period) {
 export function isMainPeriod(period) {
   return !period.includes("_");
 }
+
 // テーブル表示用の時限順序（給食を4限と5限の間に）
 export const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
