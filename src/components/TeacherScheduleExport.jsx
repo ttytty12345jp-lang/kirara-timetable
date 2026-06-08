@@ -111,7 +111,7 @@ export default function TeacherScheduleExport({ allData, teachers }) {
 
     try {
       // ⚠️ ご自身のSupabaseのURL（https://〜.functions.supabase.co）に書き換えてください
-      const SUPABASE_PROJECT_URL = "https://supabase.com/dashboard/project/ddzpylceuerwnnbiefrd/functions"; 
+      const SUPABASE_PROJECT_URL = "https://ddzpylceuerwnnbiefrd.supabase.co"; 
       const url = `${SUPABASE_PROJECT_URL}/functions/v1/export-weekly-sheet`;
 
       // サーバー（Edge Function）へPOSTリクエストを送信
