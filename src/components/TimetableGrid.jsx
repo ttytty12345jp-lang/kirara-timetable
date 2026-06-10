@@ -1,12 +1,20 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { CLASSES, getClassColor } from "../utils/constants";
 
 const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
+const WEEKDAYS = new Set(["月", "火", "水", "木", "金"]);
 
-function isCellChanged(templateVal, currentVal) {
-  if (!templateVal && !currentVal) return false;
-  if (!templateVal && currentVal) return true;
-  if (templateVal && templateVal !== currentVal) return true;
+// クラス名・時限名に絶対含まれないタブ文字でキーを生成
+const makeKey  = (cls, period) => `${cls}\t${period}`;
+const parseKey = (key) => {
+  const i = key.indexOf("\t");
+  return { cls: key.slice(0, i), period: key.slice(i + 1) };
+};
+
+function isCellChanged(tpl, cur) {
+  if (!tpl && !cur)       return false;
+  if (!tpl &&  cur)       return true;
+  if ( tpl && tpl !== cur) return true;
   return false;
 }
 
@@ -23,7 +31,7 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble }) {
         value={text}
         onChange={e => setText(e.target.value)}
         onKeyDown={e => {
-          if (e.key === "Enter") onConfirm(text);
+          if (e.key === "Enter")  onConfirm(text);
           if (e.key === "Escape") onCancel();
         }}
         onBlur={() => onConfirm(text)}
@@ -36,7 +44,7 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble }) {
       className="cell-inline-select"
       value={text}
       onChange={e => onConfirm(e.target.value)}
-      onBlur={() => onCancel()}
+      onBlur={onCancel}
       onKeyDown={e => { if (e.key === "Escape") onCancel(); }}
     >
       <option value="">—</option>
@@ -47,40 +55,41 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble }) {
 
 export default function TimetableGrid({
   selectedDate, dayOfWeek, dayData, getTemplateData,
-  subjects, teachers, specialSubjects, onSave, onShowToast
+  subjects, teachers, specialSubjects, onSave, onShowToast,
 }) {
   const [pendingChanges, setPendingChanges] = useState({});
-  const [editingCell, setEditingCell] = useState(null);
+  const [editingCell,    setEditingCell]    = useState(null);
   const clickTimer = useRef(null);
 
+  // 日付変更時に未保存変更をリセット
   useEffect(() => { setPendingChanges({}); }, [selectedDate]);
 
-  function getCellValue(cls, period, field) {
-    const key = `${cls}|${period}`;
-    
-    // 1. 未保存の変更があればそれを返す
-    if (pendingChanges[key]?.[field] !== undefined) {
-      return pendingChanges[key][field];
-    }
-    
-    // 2. 保存済みデータがあればそれを返す
-    const rec = dayData.find(r => r.class_name === cls && r.period === period);
-    if (rec && rec[field]) {
-      return rec[field];
-    }
-    
-    // 3. データがなければテンプレート値を返す（デフォルト表示）
-    return getTemplateValue(cls, period, field);
-  }
+  // dayData をマップ化してO(1)検索
+  const dayDataMap = React.useMemo(() => {
+    const m = new Map();
+    for (const r of dayData) m.set(makeKey(r.class_name, r.period), r);
+    return m;
+  }, [dayData]);
 
-  function getTemplateValue(cls, period, field) {
-    if (!["月","火","水","木","金"].includes(dayOfWeek)) return "";
+  const getTemplateValue = useCallback((cls, period, field) => {
+    if (!WEEKDAYS.has(dayOfWeek)) return "";
     const tData = getTemplateData(dayOfWeek, cls);
     const rec = tData.find(r => r.day_template_period === period);
     return rec?.[field === "subject" ? "day_template_subject" : "day_template_teacher"] || "";
-  }
+  }, [dayOfWeek, getTemplateData]);
 
-  function handleSingleOrDouble(cls, period, field) {
+  const getCellValue = useCallback((cls, period, field) => {
+    const key = makeKey(cls, period);
+    // 1. 未保存の変更
+    if (pendingChanges[key]?.[field] !== undefined) return pendingChanges[key][field];
+    // 2. 保存済みデータ
+    const rec = dayDataMap.get(key);
+    if (rec?.[field]) return rec[field];
+    // 3. テンプレート
+    return getTemplateValue(cls, period, field);
+  }, [pendingChanges, dayDataMap, getTemplateValue]);
+
+  const handleSingleOrDouble = useCallback((cls, period, field) => {
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -91,55 +100,98 @@ export default function TimetableGrid({
         setEditingCell({ cls, period, field, isDouble: false });
       }, 220);
     }
-  }
+  }, []);
 
-  function handleConfirm(cls, period, field, value) {
+  const handleConfirm = useCallback((cls, period, field, value) => {
     setEditingCell(null);
-    const key = `${cls}|${period}`;
+    const key = makeKey(cls, period);
     setPendingChanges(prev => ({
       ...prev,
-      [key]: { ...(prev[key] || {}), [field]: value }
+      [key]: { ...(prev[key] || {}), [field]: value },
     }));
-  }
+  }, []);
 
-  function handleCancel() { setEditingCell(null); }
+  const handleCancel = useCallback(() => setEditingCell(null), []);
 
-  function handleSaveAll() {
+  const handleSaveAll = useCallback(() => {
     const toSave = [];
-    
-    // 未保存の変更を保存
+
+    // 未保存の変更を保存（タブ文字で正しく分割）
     for (const [key, changes] of Object.entries(pendingChanges)) {
-      const [cls, period] = key.split("|");
-      const existing = dayData.find(r => r.class_name === cls && r.period === period);
-      const templateSubject = getTemplateValue(cls, period, "subject");
-      const templateTeacher = getTemplateValue(cls, period, "teacher");
-      
-      const subject = changes.subject !== undefined ? changes.subject : (existing?.subject || templateSubject);
-      const teacher = changes.teacher !== undefined ? changes.teacher : (existing?.teacher || templateTeacher);
-      
+      const { cls, period } = parseKey(key);
+      const existing = dayDataMap.get(key);
+
       toSave.push({
         class_name: cls,
-        date: selectedDate,
+        date:       selectedDate,
         period,
-        subject,
-        teacher,
+        subject: changes.subject !== undefined
+          ? changes.subject
+          : (existing?.subject || getTemplateValue(cls, period, "subject")),
+        teacher: changes.teacher !== undefined
+          ? changes.teacher
+          : (existing?.teacher || getTemplateValue(cls, period, "teacher")),
       });
     }
-    
-    // 既存データで変更されていないものも保持
-    for (const rec of dayData) {
-      const key = `${rec.class_name}|${rec.period}`;
-      if (!pendingChanges[key]) {
-        toSave.push(rec);
-      }
+
+    // pendingChanges にないが既存データがあるものはそのまま保持
+    for (const [key, rec] of dayDataMap.entries()) {
+      if (!pendingChanges[key]) toSave.push(rec);
     }
-    
+
     for (const rec of toSave) onSave(rec);
     setPendingChanges({});
     onShowToast("保存しました ✓");
-  }
+  }, [pendingChanges, dayDataMap, selectedDate, getTemplateValue, onSave, onShowToast]);
 
   const hasPending = Object.keys(pendingChanges).length > 0;
+
+  // セルレンダラー（通常クラス・えい・かに共通）
+  const renderCell = (cls, pKey, field, options, isLunch, bgColor) => {
+    const value     = getCellValue(cls, pKey, field);
+    const tplVal    = getTemplateValue(cls, pKey, field);
+    const changed   = isCellChanged(tplVal, value);
+    const isEditing = editingCell?.cls === cls
+                   && editingCell?.period === pKey
+                   && editingCell?.field  === field;
+    const isSubject = field === "subject";
+
+    return (
+      <td
+        key={`${pKey}-${field}`}
+        className={[
+          "timetable-cell",
+          isSubject ? "subject-cell" : "teacher-cell",
+          changed  ? "changed"    : "",
+          isLunch  ? "lunch-cell" : "",
+        ].filter(Boolean).join(" ")}
+        style={{
+          backgroundColor: isEditing ? "#fef9c3"
+                         : isLunch   ? "#e0f2fe"
+                         : changed   ? "#fca5a5"
+                         : bgColor,
+        }}
+        onClick={() => {
+          if (isLunch && isSubject) return; // 給食の教科セルは編集不可
+          handleSingleOrDouble(cls, pKey, field);
+        }}
+      >
+        {isEditing ? (
+          <CellEditor
+            value={value}
+            options={options}
+            onConfirm={v => handleConfirm(cls, pKey, field, v)}
+            onCancel={handleCancel}
+            isDouble={editingCell.isDouble}
+          />
+        ) : (
+          <span className={`cell-text ${isSubject ? "subject-text" : "teacher-text"}`}>
+            {value || (isLunch && isSubject ? "給食" : "")}
+          </span>
+        )}
+      </td>
+    );
+  };
 
   return (
     <section className="timetable-section">
@@ -148,7 +200,10 @@ export default function TimetableGrid({
           時間割
           <span className="date-label">{selectedDate} ({dayOfWeek})</span>
         </h2>
-        <button className={`save-btn ${hasPending ? "pending" : ""}`} onClick={handleSaveAll}>
+        <button
+          className={`save-btn ${hasPending ? "pending" : ""}`}
+          onClick={handleSaveAll}
+        >
           💾 保存{hasPending && <span className="pending-dot" />}
         </button>
       </div>
@@ -160,100 +215,60 @@ export default function TimetableGrid({
               <th className="th-class-col">クラス</th>
               <th className="th-kind-col">種別</th>
               {DISPLAY_PERIODS.map(p => (
-                <th key={p} className={`th-period-col${p === "給食" ? " th-lunch-col" : ""}`}>{p}</th>
+                <th key={p} className={`th-period-col${p === "給食" ? " th-lunch-col" : ""}`}>
+                  {p}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {CLASSES.map(cls => {
-              const bgColor = getClassColor(cls);
+              const bgColor  = getClassColor(cls);
               const isEikani = cls === "えい・かに";
-              const isIruka = cls === "いるか";
+              const isIruka  = cls === "いるか";
+              const subjectOptions = (isEikani || isIruka) ? specialSubjects : subjects;
 
               if (isEikani) {
-                const subRows = ["教①", "教②", "教③"];
-                const tchrRows = ["員①", "員②", "員③"];
-                const suffixes = ["", "_2", "_3"];
+                const rowDefs = [
+                  { label: "教①", sfx: "",   field: "subject" },
+                  { label: "教②", sfx: "_2", field: "subject" },
+                  { label: "教③", sfx: "_3", field: "subject" },
+                  { label: "員①", sfx: "",   field: "teacher" },
+                  { label: "員②", sfx: "_2", field: "teacher" },
+                  { label: "員③", sfx: "_3", field: "teacher" },
+                ];
 
                 return (
                   <React.Fragment key={cls}>
-                    {subRows.map((label, i) => {
-                      const sfx = suffixes[i];
-                      return (
-                        <tr key={label} className="class-subject-row eikani-row">
-                          {i === 0 && (
-                            <td className="td-class-label" rowSpan={6} style={{ backgroundColor: bgColor }}>
-                              <span className="class-label">{cls}</span>
-                            </td>
-                          )}
-                          <td className="td-kind" style={{ backgroundColor: bgColor }}>
-                            <span className="kind-label">{label}</span>
+                    {rowDefs.map((def, i) => (
+                      <tr
+                        key={def.label}
+                        className={`${def.field === "subject" ? "class-subject-row" : "class-teacher-row"} eikani-row`}
+                      >
+                        {i === 0 && (
+                          <td className="td-class-label" rowSpan={6} style={{ backgroundColor: bgColor }}>
+                            <span className="class-label">{cls}</span>
                           </td>
-                          {DISPLAY_PERIODS.map(period => {
-                            const isLunch = period === "給食";
-                            const pKey = isLunch ? period : `${period}${sfx}`;
-                            const value = getCellValue(cls, pKey, "subject");
-                            const templateValue = getTemplateValue(cls, pKey, "subject");
-                            const changed = isCellChanged(templateValue, value);
-                            const isEditing = editingCell?.cls === cls && editingCell?.period === pKey && editingCell?.field === "subject";
-                            return (
-                              <td
-                                key={period}
-                                className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
-                                style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => !isLunch && handleSingleOrDouble(cls, pKey, "subject")}
-                              >
-                                {isEditing ? (
-                                  <CellEditor value={value} options={specialSubjects} onConfirm={v => handleConfirm(cls, pKey, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                                ) : (
-                                  <span className="cell-text subject-text">{value || (isLunch ? "給食" : "")}</span>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
-                    {tchrRows.map((label, i) => {
-                      const sfx = suffixes[i];
-                      return (
-                        <tr key={label} className="class-teacher-row eikani-row">
-                          <td className="td-kind" style={{ backgroundColor: bgColor }}>
-                            <span className="kind-label">{label}</span>
-                          </td>
-                          {DISPLAY_PERIODS.map(period => {
-                            const isLunch = period === "給食";
-                            const pKey = isLunch ? period : `${period}${sfx}`;
-                            const value = getCellValue(cls, pKey, "teacher");
-                            const templateValue = getTemplateValue(cls, pKey, "teacher");
-                            const changed = isCellChanged(templateValue, value);
-                            const isEditing = editingCell?.cls === cls && editingCell?.period === pKey && editingCell?.field === "teacher";
-                            return (
-                              <td
-                                key={period}
-                                className={`timetable-cell teacher-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
-                                style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                                onClick={() => handleSingleOrDouble(cls, pKey, "teacher")}
-                              >
-                                {isEditing ? (
-                                  <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, pKey, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                                ) : (
-                                  <span className="cell-text teacher-text">{value}</span>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      );
-                    })}
+                        )}
+                        <td className="td-kind" style={{ backgroundColor: bgColor }}>
+                          <span className="kind-label">{def.label}</span>
+                        </td>
+                        {DISPLAY_PERIODS.map(period => {
+                          const isLunch = period === "給食";
+                          const pKey    = isLunch ? period : `${period}${def.sfx}`;
+                          return renderCell(
+                            cls, pKey, def.field,
+                            def.field === "subject" ? specialSubjects : teachers,
+                            isLunch, bgColor,
+                          );
+                        })}
+                      </tr>
+                    ))}
                   </React.Fragment>
                 );
               }
 
-              // 通常クラス・いるか
-              // いるかクラスの場合は特別クラス教科(specialSubjects)を使用、それ以外は通常の教科(subjects)を使用
-              const currentSubjectOptions = isIruka ? specialSubjects : subjects;
-
+              // 通常クラス・いるか（教科行＋教員行の2行）
               return (
                 <React.Fragment key={cls}>
                   <tr className="class-subject-row">
@@ -265,24 +280,7 @@ export default function TimetableGrid({
                     </td>
                     {DISPLAY_PERIODS.map(period => {
                       const isLunch = period === "給食";
-                      const value = getCellValue(cls, period, "subject");
-                      const templateValue = getTemplateValue(cls, period, "subject");
-                      const changed = isCellChanged(templateValue, value);
-                      const isEditing = editingCell?.cls === cls && editingCell?.period === period && editingCell?.field === "subject";
-                      return (
-                        <td
-                          key={period}
-                          className={`timetable-cell subject-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
-                          style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => !isLunch && handleSingleOrDouble(cls, period, "subject")}
-                        >
-                          {isEditing ? (
-                            <CellEditor value={value} options={currentSubjectOptions} onConfirm={v => handleConfirm(cls, period, "subject", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                          ) : (
-                            <span className="cell-text subject-text">{value || (isLunch ? "給食" : "")}</span>
-                          )}
-                        </td>
-                      );
+                      return renderCell(cls, period, "subject", subjectOptions, isLunch, bgColor);
                     })}
                   </tr>
                   <tr className="class-teacher-row">
@@ -291,24 +289,7 @@ export default function TimetableGrid({
                     </td>
                     {DISPLAY_PERIODS.map(period => {
                       const isLunch = period === "給食";
-                      const value = getCellValue(cls, period, "teacher");
-                      const templateValue = getTemplateValue(cls, period, "teacher");
-                      const changed = isCellChanged(templateValue, value);
-                      const isEditing = editingCell?.cls === cls && editingCell?.period === period && editingCell?.field === "teacher";
-                      return (
-                        <td
-                          key={period}
-                          className={`timetable-cell teacher-cell${changed ? " changed" : ""}${isLunch ? " lunch-cell" : ""}`}
-                          style={{ backgroundColor: isEditing ? "#fef9c3" : isLunch ? "#e0f2fe" : changed ? "#fca5a5" : bgColor }}
-                          onClick={() => handleSingleOrDouble(cls, period, "teacher")}
-                        >
-                          {isEditing ? (
-                            <CellEditor value={value} options={teachers} onConfirm={v => handleConfirm(cls, period, "teacher", v)} onCancel={handleCancel} isDouble={editingCell.isDouble} />
-                          ) : (
-                            <span className="cell-text teacher-text">{value}</span>
-                          )}
-                        </td>
-                      );
+                      return renderCell(cls, period, "teacher", teachers, isLunch, bgColor);
                     })}
                   </tr>
                 </React.Fragment>
@@ -319,8 +300,12 @@ export default function TimetableGrid({
       </div>
 
       <div className="legend">
-        <span className="legend-item"><span className="legend-dot changed-dot" />テンプレートと異なる</span>
-        <span className="legend-item"><span className="legend-dot pending-legend-dot" />未保存の変更</span>
+        <span className="legend-item">
+          <span className="legend-dot changed-dot" />テンプレートと異なる
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot pending-legend-dot" />未保存の変更
+        </span>
         <span className="legend-sep">クリック: ドロップダウン / ダブルクリック: 手入力</span>
       </div>
     </section>
