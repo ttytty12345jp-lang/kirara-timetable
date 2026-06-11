@@ -242,7 +242,36 @@ export default function TimetableGrid({
               const bgColor  = getClassColor(cls);
               const isEikani = cls === "えい・かに";
               const isIruka  = cls === "いるか";
+              const isF      = cls === "F";
               const subjectOptions = (isEikani || isIruka) ? specialSubjects : subjects;
+
+              if (isF) {
+                const rowDefs = [
+                  { label: "①", sfx: ""   },
+                  { label: "②", sfx: "_2" },
+                ];
+                return (
+                  <React.Fragment key={cls}>
+                    {rowDefs.map((def, i) => (
+                      <tr key={def.label} className="class-teacher-row">
+                        {i === 0 && (
+                          <td className="td-class-label" rowSpan={2} style={{ backgroundColor: bgColor }}>
+                            <span className="class-label">{cls}</span>
+                          </td>
+                        )}
+                        <td className="td-kind" style={{ backgroundColor: bgColor }}>
+                          <span className="kind-label">{def.label}</span>
+                        </td>
+                        {DISPLAY_PERIODS.map(period => {
+                          const isLunch = period === "給食";
+                          const pKey    = isLunch ? period : `${period}${def.sfx}`;
+                          return renderCell(cls, pKey, "teacher", teachers, isLunch, bgColor);
+                        })}
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                );
+              }
 
               if (isEikani) {
                 const rowDefs = [

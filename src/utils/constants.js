@@ -7,6 +7,7 @@ export const CLASSES = [
   "6-1", "6-2",
   "いるか",
   "えい・かに",
+  "F",
 ];
 
 export const PERIODS = ["1限", "2限", "3限", "4限", "5限", "6限", "給食"];
@@ -69,7 +70,10 @@ export function getGrade(className) {
   return match ? parseInt(match[1]) : null;
 }
 
+export const F_CLASS_COLOR = "#99f6e4";
+
 export function getClassColor(className) {
+  if (className === "F") return F_CLASS_COLOR;
   if (className === "えい・かに" || className === "いるか" || className === "かに") {
     return SPECIAL_CLASS_COLOR;
   }
