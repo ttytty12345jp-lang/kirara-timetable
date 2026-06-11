@@ -70,7 +70,7 @@ export function getGrade(className) {
   return match ? parseInt(match[1]) : null;
 }
 
-export const F_CLASS_COLOR = "#99f6e4";
+export const F_CLASS_COLOR = "#ccfbf1";
 
 export function getClassColor(className) {
   if (className === "F") return F_CLASS_COLOR;

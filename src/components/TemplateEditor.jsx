@@ -14,7 +14,8 @@ export default function TemplateEditor({
 
   // 3段表示（レイアウト）にするのは「えい・かに」のみ
   const isEikani = selectedClass === "えい・かに";
-  
+  const isF      = selectedClass === "F";
+
   // 特別クラス教科（specialSubjects）を参照するのは「えい・かに」と「いるか」
   const isSpecialSubjectClass = selectedClass === "えい・かに" || selectedClass === "いるか";
 
@@ -51,6 +52,12 @@ export default function TemplateEditor({
             periodsToSave.push(`${basePeriod}${sfx}`);
           }
         }
+      }
+    } else if (isF) {
+      // F：2行分（教員のみ）を保存
+      for (const basePeriod of TEMPLATE_PERIODS) {
+        periodsToSave.push(basePeriod);
+        if (basePeriod !== "給食") periodsToSave.push(`${basePeriod}_2`);
       }
     } else {
       // いるか・通常クラス：1行
@@ -143,6 +150,13 @@ export default function TemplateEditor({
           teachers={teachers}
           onCellChange={handleCellChange}
         />
+      ) : isF ? (
+        <FTemplateTable
+          periods={TEMPLATE_PERIODS}
+          localTemplate={localTemplate}
+          teachers={teachers}
+          onCellChange={handleCellChange}
+        />
       ) : (
         <NormalTemplateTable
           periods={TEMPLATE_PERIODS}
@@ -213,6 +227,78 @@ function NormalTemplateTable({ periods, localTemplate, subjectOptions, teachers,
                   </select>
                 </td>
               </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// F専用テンプレートテーブル（2行・教員のみ）
+function FTemplateTable({ periods, localTemplate, teachers, onCellChange }) {
+  const rowDefs = [
+    { label: "①", sfx: ""   },
+    { label: "②", sfx: "_2" },
+  ];
+
+  return (
+    <div className="template-table-wrapper">
+      <table className="template-table template-table-special">
+        <thead>
+          <tr>
+            <th>時限</th>
+            <th>行</th>
+            <th>教員</th>
+          </tr>
+        </thead>
+        <tbody>
+          {periods.map(basePeriod => {
+            const isLunch = basePeriod === "給食";
+            if (isLunch) {
+              const vals = localTemplate[basePeriod] || {};
+              return (
+                <tr key={basePeriod} className="lunch-row">
+                  <td className="td-period-sm">{basePeriod}</td>
+                  <td className="td-row-label">—</td>
+                  <td>
+                    <select
+                      className="template-cell-select"
+                      value={vals.teacher || ""}
+                      onChange={e => onCellChange(basePeriod, "teacher", e.target.value)}
+                    >
+                      <option value="">—</option>
+                      {teachers.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                  </td>
+                </tr>
+              );
+            }
+            return (
+              <React.Fragment key={basePeriod}>
+                {rowDefs.map((def, idx) => {
+                  const period = `${basePeriod}${def.sfx}`;
+                  const vals = localTemplate[period] || {};
+                  return (
+                    <tr key={period}>
+                      {idx === 0 && (
+                        <td className="td-period-sm" rowSpan={2}>{basePeriod}</td>
+                      )}
+                      <td className="td-row-label">{def.label}</td>
+                      <td>
+                        <select
+                          className="template-cell-select"
+                          value={vals.teacher || ""}
+                          onChange={e => onCellChange(period, "teacher", e.target.value)}
+                        >
+                          <option value="">—</option>
+                          {teachers.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </React.Fragment>
             );
           })}
         </tbody>
