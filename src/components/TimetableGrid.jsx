@@ -84,7 +84,7 @@ export default function TimetableGrid({
     if (pendingChanges[key]?.[field] !== undefined) return pendingChanges[key][field];
     // 2. 保存済みデータ
     const rec = dayDataMap.get(key);
-    if (rec && field in rec && rec[field] !== null && rec[field] !== underfined) {
+    if (rec && field in rec && rec[field] !== null && rec[field] !== undefined) {
       return rec[field];
     }
     // 3. テンプレート
