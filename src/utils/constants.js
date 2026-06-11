@@ -46,7 +46,8 @@ export const GRADE_COLORS = {
   6: "#e9d5ff",
 };
 
-export const SPECIAL_CLASS_COLOR = "#e0e7ff";
+export const IRUKA_COLOR  = "#eef0ff";
+export const EIKANI_COLOR = "#c7d2fe";
 
 export const DAYS = ["月", "火", "水", "木", "金"];
 
@@ -73,10 +74,9 @@ export function getGrade(className) {
 export const F_CLASS_COLOR = "#ccfbf1";
 
 export function getClassColor(className) {
-  if (className === "F") return F_CLASS_COLOR;
-  if (className === "えい・かに" || className === "いるか" || className === "かに") {
-    return SPECIAL_CLASS_COLOR;
-  }
+  if (className === "F")       return F_CLASS_COLOR;
+  if (className === "えい・かに" || className === "かに") return EIKANI_COLOR;
+  if (className === "いるか")  return IRUKA_COLOR;
   const grade = getGrade(className);
   return grade && GRADE_COLORS[grade] ? GRADE_COLORS[grade] : "#f1f5f9";
 }
