@@ -139,6 +139,9 @@ export function useStorage() {
       return;
     }
 
+    // 先にローカル state を更新してフラッシュを防ぐ
+    setData(prev => upsertLocal(prev, record));
+
     try {
       const existing = await findExisting(record);
       if (existing) {
