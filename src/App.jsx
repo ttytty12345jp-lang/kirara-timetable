@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Header from "./components/Header";
 import DatePicker from "./components/DatePicker";
 import TimetableGrid from "./components/TimetableGrid";
@@ -101,31 +101,44 @@ export default function App() {
 }
 
 // メモコンポーネント（デバウンス付き自動保存）
+// 非制御コンポーネント：React が textarea.value を強制セットしないので IME 変換が壊れない
 function MemoSection({ value, onChange, selectedDate }) {
-  const [localValue, setLocalValue] = useState(value);
+  const textareaRef  = useRef(null);
+  const isComposing  = useRef(false);
+  const savedValue   = useRef(value);
+  const timerRef     = useRef(null);
 
-  // 日付が変わったらローカル値を更新
+  // 日付が変わったときだけ textarea の内容を外部値でリセット
   useEffect(() => {
-    setLocalValue(value);
-  }, [selectedDate, value]);
+    savedValue.current = value;
+    if (textareaRef.current) textareaRef.current.value = value;
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 入力が止まって800ms後に自動保存
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (localValue !== value) {
-        onChange(localValue);
+  function scheduleSave(text) {
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      if (text !== savedValue.current) {
+        savedValue.current = text;
+        onChange(text);
       }
     }, 800);
-    return () => clearTimeout(timer);
-  }, [localValue]);
+  }
 
   return (
     <section className="memo-section">
       <textarea
+        ref={textareaRef}
         className="memo-textarea"
         placeholder="メモ・連絡事項など（自動保存されます）"
-        value={localValue}
-        onChange={e => setLocalValue(e.target.value)}
+        defaultValue={value}
+        onCompositionStart={() => { isComposing.current = true; }}
+        onCompositionEnd={e => {
+          isComposing.current = false;
+          scheduleSave(e.target.value);
+        }}
+        onChange={e => {
+          if (!isComposing.current) scheduleSave(e.target.value);
+        }}
         rows={2}
       />
     </section>
