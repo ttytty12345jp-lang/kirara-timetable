@@ -79,18 +79,22 @@ export default function TimetableGrid({
   }, [dayOfWeek, getTemplateData]);
 
   const getCellValue = useCallback((cls, period, field) => {
-    const key = makeKey(cls, period);
-    // 1. 未保存の変更
-    if (pendingChanges[key]?.[field] !== undefined) return pendingChanges[key][field];
-    // 2. 保存済みデータ
-    const rec = dayDataMap.get(key);
-    if (rec && field in rec && rec[field] !== null && rec[field] !== undefined) {
-      return rec[field];
-    }
-    // 3. テンプレート
-    return getTemplateValue(cls, period, field);
-  }, [pendingChanges, dayDataMap, getTemplateValue]);
+  const key = makeKey(cls, period);
 
+  // 1. 未保存の変更（空文字も有効）
+  if (pendingChanges[key]?.[field] !== undefined) {
+    return pendingChanges[key][field];
+  }
+
+  // 2. 保存済みデータ（空文字も有効・nullのみ除外）
+  const rec = dayDataMap.get(key);
+  if (rec && field in rec && rec[field] !== null && rec[field] !== undefined) {
+    return rec[field];
+  }
+
+  // 3. テンプレート（データが一切ない場合のみ）
+  return getTemplateValue(cls, period, field);
+}, [pendingChanges, dayDataMap, getTemplateValue]);
   const handleSingleOrDouble = useCallback((cls, period, field) => {
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
