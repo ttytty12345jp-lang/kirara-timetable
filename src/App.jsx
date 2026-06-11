@@ -106,15 +106,26 @@ function MemoSection({ value, onChange, selectedDate }) {
   const textareaRef  = useRef(null);
   const isComposing  = useRef(false);
   const savedValue   = useRef(value);
+  const userHasTyped = useRef(false);
   const timerRef     = useRef(null);
 
-  // 日付が変わったときだけ textarea の内容を外部値でリセット
+  // 日付が変わったときはリセット
   useEffect(() => {
     savedValue.current = value;
+    userHasTyped.current = false;
     if (textareaRef.current) textareaRef.current.value = value;
   }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ユーザーがまだ入力していない間だけ、外部データ（初回ロード等）を反映
+  useEffect(() => {
+    if (!userHasTyped.current && textareaRef.current) {
+      textareaRef.current.value = value;
+      savedValue.current = value;
+    }
+  }, [value]);
+
   function scheduleSave(text) {
+    userHasTyped.current = true;
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (text !== savedValue.current) {
