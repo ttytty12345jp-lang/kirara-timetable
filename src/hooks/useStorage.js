@@ -9,9 +9,6 @@ const USE_SUPABASE = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 if (USE_SUPABASE) {
   supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  console.log("✅ Supabase有効");
-} else {
-  console.warn("⚠️ Supabase未設定 → localStorageモード");
 }
 
 const STORAGE_KEY = "kirara_timetable_data";
@@ -94,27 +91,36 @@ export function useStorage() {
       .channel("timetable_changes")
       .on("postgres_changes",
         { event: "*", schema: "public", table: "timetable" },
-        (payload) => {
-          console.log("📡 リアルタイム受信:", payload.eventType);
-          loadFromSupabase();
-        }
+        () => { loadFromSupabase(); }
       )
-      .subscribe((status) => {
-        console.log("📡 購読ステータス:", status);
-      });
+      .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
   async function loadFromSupabase() {
     setLoading(true);
     try {
-      const { data: records, error } = await supabase
-        .from("timetable")
-        .select("*")
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      console.log("📥 ロード件数:", records?.length);
-      setData(records || []);
+      // ★ 1000件上限を回避するため range で全件取得
+      let allRecords = [];
+      let from = 0;
+      const PAGE = 1000;
+
+      while (true) {
+        const { data: records, error } = await supabase
+          .from("timetable")
+          .select("*")
+          .order("created_at", { ascending: true })
+          .range(from, from + PAGE - 1);
+
+        if (error) throw error;
+        if (!records || records.length === 0) break;
+
+        allRecords = allRecords.concat(records);
+        if (records.length < PAGE) break; // 最終ページ
+        from += PAGE;
+      }
+
+      setData(allRecords);
     } catch (err) {
       console.error("❌ Supabase load error:", err);
       setData([]);
@@ -133,35 +139,22 @@ export function useStorage() {
       return;
     }
 
-    // ★ 送信内容をすべてログ出力
-    console.log("💾 saveRecord:", JSON.stringify(record));
-
     try {
       const existing = await findExisting(record);
-      console.log("🔍 existing:", existing ? existing.id : "なし（INSERT）");
-
       if (existing) {
         const { error } = await supabase
           .from("timetable")
           .update(record)
           .eq("id", existing.id);
-        if (error) {
-          console.error("❌ UPDATE失敗:", error, "record:", JSON.stringify(record));
-        } else {
-          console.log("✅ UPDATE成功:", record.class_name, record.period);
-        }
+        if (error) throw error;
       } else {
         const { error } = await supabase
           .from("timetable")
           .insert([record]);
-        if (error) {
-          console.error("❌ INSERT失敗:", error, "record:", JSON.stringify(record));
-        } else {
-          console.log("✅ INSERT成功:", record.class_name, record.period);
-        }
+        if (error) throw error;
       }
     } catch (err) {
-      console.error("❌ saveRecord例外:", err, "record:", JSON.stringify(record));
+      console.error("❌ Supabase save error:", err, JSON.stringify(record));
     }
   }, []);
 
@@ -177,14 +170,13 @@ export function useStorage() {
     try {
       const toDelete = data.filter(predicate);
       const ids = toDelete.map(r => r.id);
-      console.log("🗑 削除件数:", ids.length);
       if (ids.length > 0) {
         const { error } = await supabase
           .from("timetable").delete().in("id", ids);
-        if (error) console.error("❌ DELETE失敗:", error);
+        if (error) throw error;
       }
     } catch (err) {
-      console.error("❌ deleteRecord例外:", err);
+      console.error("❌ Supabase delete error:", err);
     }
   }, [data]);
 
