@@ -120,29 +120,37 @@ export default function TimetableGrid({
   const handleCancel = useCallback(() => setEditingCell(null), []);
 
   const handleSaveAll = useCallback(() => {
-   const toSave = [];
-   const savedKeys = new Set();
+  const toSave = [];
+  const savedKeys = new Set();
 
-  // 1. pendingChanges をすべて保存
   for (const [key, changes] of Object.entries(pendingChanges)) {
     const { cls, period } = parseKey(key);
     const existing = dayDataMap.get(key);
+
+    // ?? を使うことで空文字 "" を有効な値として扱う
+    const subject = changes.subject !== undefined
+      ? changes.subject
+      : (existing !== undefined && existing.subject !== null && existing.subject !== undefined
+          ? existing.subject
+          : getTemplateValue(cls, period, "subject"));
+
+    const teacher = changes.teacher !== undefined
+      ? changes.teacher
+      : (existing !== undefined && existing.teacher !== null && existing.teacher !== undefined
+          ? existing.teacher
+          : getTemplateValue(cls, period, "teacher"));
 
     toSave.push({
       class_name: cls,
       date:       selectedDate,
       period,
-      subject: changes.subject !== undefined
-        ? changes.subject
-        : (existing?.subject || getTemplateValue(cls, period, "subject")),
-      teacher: changes.teacher !== undefined
-        ? changes.teacher
-        : (existing?.teacher || getTemplateValue(cls, period, "teacher")),
+      subject,
+      teacher,
     });
     savedKeys.add(key);
   }
 
-  // 2. dayDataMap にある既存データのうち、pendingChanges にないものはそのまま保持
+  // pendingChanges にない既存データはそのまま保持
   for (const [key, rec] of dayDataMap.entries()) {
     if (!savedKeys.has(key)) {
       toSave.push(rec);
@@ -152,9 +160,7 @@ export default function TimetableGrid({
   for (const rec of toSave) onSave(rec);
   setPendingChanges({});
   onShowToast("保存しました ✓");
-}, [pendingChanges, dayDataMap, selectedDate, getTemplateValue, onSave, onShowToast]);
-
-  const hasPending = Object.keys(pendingChanges).length > 0;
+}, [pendingChanges, dayDataMap, selectedDate, getTemplateValue, onSave, onShowToast]);  const hasPending = Object.keys(pendingChanges).length > 0;
 
   // セルレンダラー（通常クラス・えい・かに共通）
   const renderCell = (cls, pKey, field, options, isLunch, bgColor) => {
