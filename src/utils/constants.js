@@ -25,7 +25,7 @@ export const EIKANI_PERIODS = [
 
 export const DEFAULT_SUBJECTS = [
   "国語", "と書", "算数", "生活", "理科", "社会", "英語",
-  "図工", "体育", "音楽", "総合", "家庭科", "道徳", "学活", "ク･委", "きららタイム"
+  "図工", "体育","プール", "音楽", "総合", "家庭科", "道徳", "学活", "ク･委", "きららタイム"
 ];
 
 export const DEFAULT_TEACHERS = [
@@ -34,7 +34,7 @@ export const DEFAULT_TEACHERS = [
 ];
 
 export const DEFAULT_SPECIAL_SUBJECTS = [
-  "2-2算", "４年国", "4-1算", "５年国", "5-1算", "5-2算", "６年国"
+  "2-2算", "４年国", "4-1算", "５年国","5-1国", "5-1算", "5-2算", "６年国"
 ];
 
 export const GRADE_COLORS = {
