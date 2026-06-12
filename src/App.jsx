@@ -63,24 +63,34 @@ export default function App() {
           dayOfWeek={dayOfWeek}
         />
 
-        <MemoSection
-          value={memoValue}
-          onChange={handleMemoChange}
-          selectedDate={selectedDate}
-        />
+        {loading ? (
+          <div className="loading-skeleton">
+            <div className="skeleton-bar" />
+            <div className="skeleton-bar skeleton-bar--wide" />
+            <div className="skeleton-bar skeleton-bar--wide" />
+          </div>
+        ) : (
+          <MemoSection
+            value={memoValue}
+            onChange={handleMemoChange}
+            selectedDate={selectedDate}
+          />
+        )}
 
-        <TimetableGrid
-          selectedDate={selectedDate}
-          dayOfWeek={dayOfWeek}
-          dayData={getDayData(selectedDate)}
-          getTemplateData={getTemplateData}
-          subjects={subjects}
-          teachers={teachers}
-          specialSubjects={specialSubjects}
-          onSave={saveRecord}
-          onShowToast={showToast}
-          allData={data}
-        />
+        {!loading && (
+          <TimetableGrid
+            selectedDate={selectedDate}
+            dayOfWeek={dayOfWeek}
+            dayData={getDayData(selectedDate)}
+            getTemplateData={getTemplateData}
+            subjects={subjects}
+            teachers={teachers}
+            specialSubjects={specialSubjects}
+            onSave={saveRecord}
+            onShowToast={showToast}
+            allData={data}
+          />
+        )}
 
         <SettingsSection
           subjects={subjects}

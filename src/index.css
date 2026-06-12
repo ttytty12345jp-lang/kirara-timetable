@@ -814,6 +814,32 @@ body {
 /* ==========================================
    日付と表の間の「自由記述欄」スタイル（横幅・余白調整版）
    ========================================== */
+.loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.skeleton-bar {
+  height: 18px;
+  width: 40%;
+  background: linear-gradient(90deg, var(--border) 25%, #e2e8f0 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+.skeleton-bar--wide {
+  width: 100%;
+  height: 60px;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .memo-section {
   background: var(--card);
   border-radius: var(--radius);
