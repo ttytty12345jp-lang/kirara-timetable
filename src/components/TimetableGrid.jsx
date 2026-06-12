@@ -18,7 +18,9 @@ function isCellChanged(tpl, cur) {
   return false;
 }
 
-function CellEditor({ value, options, onConfirm, onCancel, isDouble }) {
+const RESET_SENTINEL = "__RESET__";
+
+function CellEditor({ value, options, onConfirm, onCancel, isDouble, templateValue }) {
   const [text, setText] = useState(value || "");
   const ref = useRef();
   useEffect(() => { ref.current?.focus(); }, []);
@@ -48,6 +50,9 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble }) {
       onKeyDown={e => { if (e.key === "Escape") onCancel(); }}
     >
       <option value="">—</option>
+      {templateValue && (
+        <option value={RESET_SENTINEL}>↩ {templateValue}（デフォルト）</option>
+      )}
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   );
@@ -111,10 +116,24 @@ export default function TimetableGrid({
   const handleConfirm = useCallback((cls, period, field, value) => {
     setEditingCell(null);
     const key = makeKey(cls, period);
-    setPendingChanges(prev => ({
-      ...prev,
-      [key]: { ...(prev[key] || {}), [field]: value },
-    }));
+    if (value === RESET_SENTINEL) {
+      // pendingChanges からそのフィールドを削除してテンプレート値に戻す
+      setPendingChanges(prev => {
+        const cell = { ...(prev[key] || {}) };
+        delete cell[field];
+        if (Object.keys(cell).length === 0) {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        }
+        return { ...prev, [key]: cell };
+      });
+    } else {
+      setPendingChanges(prev => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), [field]: value },
+      }));
+    }
   }, []);
 
   const handleCancel = useCallback(() => setEditingCell(null), []);
@@ -199,6 +218,7 @@ export default function TimetableGrid({
             onConfirm={v => handleConfirm(cls, pKey, field, v)}
             onCancel={handleCancel}
             isDouble={editingCell.isDouble}
+            templateValue={getTemplateValue(cls, pKey, field)}
           />
         ) : (
           <span className={`cell-text ${isSubject ? "subject-text" : "teacher-text"}`}>
