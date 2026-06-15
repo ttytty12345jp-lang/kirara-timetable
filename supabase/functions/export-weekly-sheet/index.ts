@@ -214,8 +214,10 @@ serve(async (req) => {
       row.eachCell({ includeEmpty: true }, (cell) => {
         if (cell.col >= 1 && cell.col <= 11) {
           cell.border = {
-            ...cell.border,
-            top: { style: "medium", color: { argb: "FF000000" } },
+            top:    { style: "medium", color: { argb: "FF000000" } },
+            left:   { style: "thin",   color: { argb: "FF000000" } },
+            bottom: { style: "thin",   color: { argb: "FF000000" } },
+            right:  { style: "thin",   color: { argb: "FF000000" } },
           };
         }
       });
