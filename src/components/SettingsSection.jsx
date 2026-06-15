@@ -134,6 +134,7 @@ export default function SettingsSection({
           dayData={dayData}
           allData={allData}
           teachers={teachers}
+          getTemplateData={getTemplateData}
         />
       )}
 

@@ -117,24 +117,19 @@ export default function TimetableGrid({
     setEditingCell(null);
     const key = makeKey(cls, period);
     if (value === RESET_SENTINEL) {
-      // pendingChanges からそのフィールドを削除してテンプレート値に戻す
-      setPendingChanges(prev => {
-        const cell = { ...(prev[key] || {}) };
-        delete cell[field];
-        if (Object.keys(cell).length === 0) {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        }
-        return { ...prev, [key]: cell };
-      });
+      // テンプレート値を pending に入れる（保存済みデータより pending が優先されるため）
+      const templateVal = getTemplateValue(cls, period, field);
+      setPendingChanges(prev => ({
+        ...prev,
+        [key]: { ...(prev[key] || {}), [field]: templateVal },
+      }));
     } else {
       setPendingChanges(prev => ({
         ...prev,
         [key]: { ...(prev[key] || {}), [field]: value },
       }));
     }
-  }, []);
+  }, [getTemplateValue]);
 
   const handleCancel = useCallback(() => setEditingCell(null), []);
 

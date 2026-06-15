@@ -36,7 +36,7 @@ function getWeekdayLabel(dateStr) {
   return labels[d.getDay()];
 }
 
-export default function TeacherScheduleExport({ allData, teachers }) {
+export default function TeacherScheduleExport({ allData, teachers, getTemplateData }) {
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [baseDate, setBaseDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [weekData, setWeekData] = useState(null);
@@ -57,15 +57,19 @@ export default function TeacherScheduleExport({ allData, teachers }) {
       return { class_name: actual.class_name, subject: actual.subject || "", source: "actual" };
     }
 
-    // 2. テンプレートから検索
+    // 2. テンプレートから検索（日付に対応したバージョンを使用）
     if (!["月", "火", "水", "木", "金"].includes(dayLabel)) return null;
-    const tmpl = allData.find(
-      r =>
-        r.class_name === "DAY_TEMPLATE" &&
-        r.day_template_day === dayLabel &&
-        r.day_template_period === period &&
-        r.day_template_teacher === selectedTeacher
-    );
+    const CLASSES_ALL = [...Array(6).keys()].flatMap(g =>
+      [`${g+1}-1`, `${g+1}-2`]
+    ).concat(["いるか", "えい・かに", "F"]);
+    let tmpl = null;
+    for (const cls of CLASSES_ALL) {
+      const tData = getTemplateData(dayLabel, cls, date);
+      const found = tData.find(
+        r => r.day_template_period === period && r.day_template_teacher === selectedTeacher
+      );
+      if (found) { tmpl = found; break; }
+    }
     if (!tmpl) return null;
 
     // 実データが存在する場合はテンプレートを使用しない
