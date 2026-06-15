@@ -10,6 +10,7 @@ export default function TemplateEditor({
 }) {
   const [selectedDay, setSelectedDay] = useState("月");
   const [selectedClass, setSelectedClass] = useState("1-1");
+  const [fromDate, setFromDate] = useState("");
   const [localTemplate, setLocalTemplate] = useState({});
 
   // 3段表示（レイアウト）にするのは「えい・かに」のみ
@@ -20,7 +21,7 @@ export default function TemplateEditor({
   const isSpecialSubjectClass = selectedClass === "えい・かに" || selectedClass === "いるか";
 
   useEffect(() => {
-    const tData = getTemplateData(selectedDay, selectedClass);
+    const tData = getTemplateData(selectedDay, selectedClass, fromDate || undefined);
     const map = {};
     for (const rec of tData) {
       map[rec.day_template_period] = {
@@ -29,7 +30,7 @@ export default function TemplateEditor({
       };
     }
     setLocalTemplate(map);
-  }, [selectedDay, selectedClass, allData]);
+  }, [selectedDay, selectedClass, fromDate, allData]);
 
   function handleCellChange(period, field, value) {
     setLocalTemplate(prev => ({
@@ -71,19 +72,23 @@ export default function TemplateEditor({
         day_template_day: selectedDay,
         day_template_class: selectedClass,
         day_template_period: period,
+        day_template_from: fromDate || "",
         day_template_subject: vals.subject || "",
         day_template_teacher: vals.teacher || "",
       });
     }
-    onShowToast(`${selectedDay}曜 ${selectedClass} テンプレートを保存しました ✓`);
+    const fromLabel = fromDate ? `（${fromDate}〜）` : "";
+    onShowToast(`${selectedDay}曜 ${selectedClass}${fromLabel} テンプレートを保存しました ✓`);
   }
 
   function handleDeleteTemplate() {
-    if (!confirm(`${selectedDay}曜 ${selectedClass} のテンプレートを削除しますか？`)) return;
+    const fromLabel = fromDate ? `（${fromDate}〜）` : "（開始日なし）";
+    if (!confirm(`${selectedDay}曜 ${selectedClass} ${fromLabel} のテンプレートを削除しますか？`)) return;
     onDelete(r =>
       r.class_name === "DAY_TEMPLATE" &&
       r.day_template_day === selectedDay &&
-      r.day_template_class === selectedClass
+      r.day_template_class === selectedClass &&
+      (r.day_template_from || "") === fromDate
     );
     setLocalTemplate({});
     onShowToast("テンプレートを削除しました");
@@ -140,6 +145,29 @@ export default function TemplateEditor({
             ))}
           </select>
         </div>
+        <div className="form-group-inline">
+          <label className="form-label">開始日</label>
+          <input
+            type="date"
+            className="form-select"
+            value={fromDate}
+            onChange={e => setFromDate(e.target.value)}
+          />
+          {fromDate && (
+            <button
+              className="secondary-btn"
+              style={{ marginLeft: 6, padding: "2px 8px", fontSize: 12 }}
+              onClick={() => setFromDate("")}
+            >
+              クリア
+            </button>
+          )}
+        </div>
+        {fromDate && (
+          <p className="template-from-note">
+            {fromDate} 以降に適用されるテンプレートを編集中
+          </p>
+        )}
       </div>
 
       {isEikani ? (

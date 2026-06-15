@@ -34,7 +34,8 @@ function upsertLocal(prev, record) {
       r.class_name          === "DAY_TEMPLATE" &&
       r.day_template_day    === record.day_template_day &&
       r.day_template_class  === record.day_template_class &&
-      r.day_template_period === record.day_template_period
+      r.day_template_period === record.day_template_period &&
+      (r.day_template_from  || "") === (record.day_template_from || "")
     );
   } else {
     idx = prev.findIndex(r =>
@@ -60,7 +61,8 @@ async function findExisting(record) {
       .eq("class_name",          "DAY_TEMPLATE")
       .eq("day_template_day",    record.day_template_day)
       .eq("day_template_class",  record.day_template_class)
-      .eq("day_template_period", record.day_template_period);
+      .eq("day_template_period", record.day_template_period)
+      .eq("day_template_from",   record.day_template_from || "");
   } else {
     query = query
       .eq("date",       record.date)

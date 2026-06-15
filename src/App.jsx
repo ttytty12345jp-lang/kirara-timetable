@@ -28,12 +28,18 @@ export default function App() {
     );
   }
 
-  function getTemplateData(day, className) {
-    return data.filter(r =>
+  function getTemplateData(day, className, forDate) {
+    const targetDate = forDate || selectedDate;
+    const all = data.filter(r =>
       r.class_name === "DAY_TEMPLATE" &&
       r.day_template_day === day &&
       r.day_template_class === className
     );
+    // 開始日ごとにグループ化し、targetDate 以前で最新の開始日を選ぶ
+    const froms = [...new Set(all.map(r => r.day_template_from || ""))];
+    const valid = froms.filter(f => !f || f <= targetDate).sort().reverse();
+    const bestFrom = valid[0] ?? "";
+    return all.filter(r => (r.day_template_from || "") === bestFrom);
   }
 
   function getConfig(key) {
