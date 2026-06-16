@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { CLASSES, getClassColor } from "../utils/constants";
-
-const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
+import { CLASSES, getClassColor, DISPLAY_PERIODS } from "../utils/constants";
 const WEEKDAYS = new Set(["月", "火", "水", "木", "金"]);
 
 // クラス名・時限名に絶対含まれないタブ文字でキーを生成

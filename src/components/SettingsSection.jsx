@@ -1,5 +1,5 @@
-import { useState, useCallback } from "react";
-import { CLASSES, DAYS, PERIODS, DEFAULT_SUBJECTS, DEFAULT_TEACHERS, DEFAULT_SPECIAL_SUBJECTS } from "../utils/constants";
+import { useState, useEffect } from "react";
+import { DEFAULT_SUBJECTS, DEFAULT_TEACHERS, DEFAULT_SPECIAL_SUBJECTS } from "../utils/constants";
 import TemplateEditor from "./TemplateEditor";
 import TeacherScheduleExport from "./TeacherScheduleExport";
 
@@ -13,27 +13,28 @@ export default function SettingsSection({
   const [teachersInput, setTeachersInput] = useState(teachers.join(","));
   const [specialInput, setSpecialInput] = useState(specialSubjects.join(","));
 
-  function saveConfig(key, value) {
-    onSave({ config_key: key, config_value: value });
-  }
+  // 外部からリセット（handleMasterReset）後に prop が変化した場合も反映
+  useEffect(() => { setSubjectsInput(subjects.join(",")); }, [subjects.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setTeachersInput(teachers.join(",")); }, [teachers.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setSpecialInput(specialSubjects.join(",")); }, [specialSubjects.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleMasterSave() {
-    saveConfig("subjects_list", subjectsInput);
-    saveConfig("teachers_list", teachersInput);
-    saveConfig("special_subject", specialInput);
+    onSave({ config_key: "subjects_list",  config_value: subjectsInput });
+    onSave({ config_key: "teachers_list",  config_value: teachersInput });
+    onSave({ config_key: "special_subject", config_value: specialInput });
     onShowToast("設定を更新しました ✓");
   }
 
   function handleMasterReset() {
-    const s = DEFAULT_SUBJECTS.join(",");
-    const t = DEFAULT_TEACHERS.join(",");
+    const s  = DEFAULT_SUBJECTS.join(",");
+    const t  = DEFAULT_TEACHERS.join(",");
     const sp = DEFAULT_SPECIAL_SUBJECTS.join(",");
     setSubjectsInput(s);
     setTeachersInput(t);
     setSpecialInput(sp);
-    saveConfig("subjects_list", s);
-    saveConfig("teachers_list", t);
-    saveConfig("special_subject", sp);
+    onSave({ config_key: "subjects_list",  config_value: s });
+    onSave({ config_key: "teachers_list",  config_value: t });
+    onSave({ config_key: "special_subject", config_value: sp });
     onShowToast("デフォルトにリセットしました");
   }
 

@@ -1,8 +1,5 @@
 import { useState } from "react";
-import { CLASSES } from "../utils/constants";
-
-const DISPLAY_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
-const DAYS_JA = ["月", "火", "水", "木", "金"];
+import { CLASSES, DAYS, DISPLAY_PERIODS, getDateString } from "../utils/constants";
 
 // --- 補助関数: 指定日が含まれる週の月曜日を取得 ---
 function getMonday(dateStr) {
@@ -38,7 +35,7 @@ function getWeekdayLabel(dateStr) {
 
 export default function TeacherScheduleExport({ allData, teachers, getTemplateData }) {
   const [selectedTeacher, setSelectedTeacher] = useState("");
-  const [baseDate, setBaseDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [baseDate, setBaseDate] = useState(() => getDateString(new Date()));
   const [weekData, setWeekData] = useState(null);
 
   // --- 教員の該当日の持ちコマを検索（優先順位: 実データ > テンプレート） ---
@@ -59,11 +56,8 @@ export default function TeacherScheduleExport({ allData, teachers, getTemplateDa
 
     // 2. テンプレートから検索（日付に対応したバージョンを使用）
     if (!["月", "火", "水", "木", "金"].includes(dayLabel)) return null;
-    const CLASSES_ALL = [...Array(6).keys()].flatMap(g =>
-      [`${g+1}-1`, `${g+1}-2`]
-    ).concat(["いるか", "えい・かに", "F"]);
     let tmpl = null;
-    for (const cls of CLASSES_ALL) {
+    for (const cls of CLASSES) {
       const tData = getTemplateData(dayLabel, cls, date);
       const found = tData.find(
         r => r.day_template_period === period && r.day_template_teacher === selectedTeacher
@@ -93,7 +87,7 @@ export default function TeacherScheduleExport({ allData, teachers, getTemplateDa
       return;
     }
     const monday = getMonday(baseDate);
-    const schedule = DAYS_JA.map((day, i) => {
+    const schedule = DAYS.map((day, i) => {
       const date = addDays(monday, i);
       const periods = DISPLAY_PERIODS.map(period => {
         const result = findCellForTeacher(date, day, period);

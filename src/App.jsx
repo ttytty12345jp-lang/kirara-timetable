@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import Header from "./components/Header";
 import DatePicker from "./components/DatePicker";
 import TimetableGrid from "./components/TimetableGrid";
@@ -6,7 +6,7 @@ import SettingsSection from "./components/SettingsSection";
 import Toast from "./components/Toast";
 import { useStorage } from "./hooks/useStorage";
 import {
-  CLASSES, DEFAULT_SUBJECTS, DEFAULT_TEACHERS,
+  DEFAULT_SUBJECTS, DEFAULT_TEACHERS,
   DEFAULT_SPECIAL_SUBJECTS, getDateString, getDayOfWeek
 } from "./utils/constants";
 
@@ -22,13 +22,23 @@ export default function App() {
 
   const dayOfWeek = getDayOfWeek(selectedDate);
 
-  function getDayData(date) {
-    return data.filter(r =>
-      r.date === date && r.class_name && !r.config_key && r.class_name !== "DAY_TEMPLATE"
-    );
-  }
+  // config マップをメモ化してO(1)参照
+  const configMap = useMemo(() => {
+    const m = new Map();
+    for (const r of data) {
+      if (r.config_key) m.set(r.config_key, r.config_value);
+    }
+    return m;
+  }, [data]);
 
-  function getTemplateData(day, className, forDate) {
+  const getConfig = useCallback((key) => configMap.get(key) || null, [configMap]);
+
+  const getDayData = useCallback((date) =>
+    data.filter(r =>
+      r.date === date && r.class_name && !r.config_key && r.class_name !== "DAY_TEMPLATE"
+    ), [data]);
+
+  const getTemplateData = useCallback((day, className, forDate) => {
     const targetDate = forDate || selectedDate;
     const all = data.filter(r =>
       r.class_name === "DAY_TEMPLATE" &&
@@ -40,24 +50,29 @@ export default function App() {
     const valid = froms.filter(f => !f || f <= targetDate).sort().reverse();
     const bestFrom = valid[0] ?? "";
     return all.filter(r => (r.day_template_from || "") === bestFrom);
-  }
+  }, [data, selectedDate]);
 
-  function getConfig(key) {
-    const rec = data.find(r => r.config_key === key);
-    return rec?.config_value || null;
-  }
+  const subjects = useMemo(() =>
+    (getConfig("subjects_list") || DEFAULT_SUBJECTS.join(",")).split(",").filter(Boolean),
+    [getConfig]);
 
-  const subjects        = (getConfig("subjects_list")   || DEFAULT_SUBJECTS.join(",")).split(",").filter(Boolean);
-  const teachers        = (getConfig("teachers_list")   || DEFAULT_TEACHERS.join(",")).split(",").filter(Boolean);
-  const specialSubjects = (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean);
+  const teachers = useMemo(() =>
+    (getConfig("teachers_list") || DEFAULT_TEACHERS.join(",")).split(",").filter(Boolean),
+    [getConfig]);
 
-  // メモ: 日付ごとに config_key = "memo_{date}" で保存
+  const specialSubjects = useMemo(() =>
+    (getConfig("special_subject") || DEFAULT_SPECIAL_SUBJECTS.join(",")).split(",").filter(Boolean),
+    [getConfig]);
+
   const memoKey   = `memo_${selectedDate}`;
   const memoValue = getConfig(memoKey) || "";
 
-  function handleMemoChange(value) {
-    saveRecord({ config_key: memoKey, config_value: value });
-  }
+  const handleMemoChange = useCallback((value) => {
+    saveRecord({ config_key: `memo_${selectedDate}`, config_value: value });
+  }, [saveRecord, selectedDate]);
+
+  // 同じ日付で2回 getDayData を呼ばないようにメモ化
+  const currentDayData = useMemo(() => getDayData(selectedDate), [getDayData, selectedDate]);
 
   return (
     <div className="app">
@@ -87,14 +102,13 @@ export default function App() {
           <TimetableGrid
             selectedDate={selectedDate}
             dayOfWeek={dayOfWeek}
-            dayData={getDayData(selectedDate)}
+            dayData={currentDayData}
             getTemplateData={getTemplateData}
             subjects={subjects}
             teachers={teachers}
             specialSubjects={specialSubjects}
             onSave={saveRecord}
             onShowToast={showToast}
-            allData={data}
           />
         )}
 
@@ -107,7 +121,7 @@ export default function App() {
           onDelete={deleteRecord}
           onShowToast={showToast}
           selectedDate={selectedDate}
-          dayData={getDayData(selectedDate)}
+          dayData={currentDayData}
           allData={data}
         />
       </main>

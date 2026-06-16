@@ -172,18 +172,18 @@ export function useStorage() {
       });
       return;
     }
-    try {
-      const toDelete = data.filter(predicate);
-      const ids = toDelete.map(r => r.id);
+    // setData の関数形式で最新の data を参照し、data への依存を除去
+    setData(prev => {
+      const ids = prev.filter(predicate).map(r => r.id);
       if (ids.length > 0) {
-        const { error } = await supabase
-          .from("timetable").delete().in("id", ids);
-        if (error) throw error;
+        supabase.from("timetable").delete().in("id", ids)
+          .then(({ error }) => {
+            if (error) console.error("❌ Supabase delete error:", error);
+          });
       }
-    } catch (err) {
-      console.error("❌ Supabase delete error:", err);
-    }
-  }, [data]);
+      return prev.filter(r => !predicate(r));
+    });
+  }, []);
 
   return { data, saveRecord, deleteRecord, loading };
 }

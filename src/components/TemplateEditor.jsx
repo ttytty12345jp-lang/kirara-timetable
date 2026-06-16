@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { CLASSES, DAYS, getClassColor } from "../utils/constants";
+import { CLASSES, DAYS, DISPLAY_PERIODS } from "../utils/constants";
 
-const TEMPLATE_PERIODS = ["1限", "2限", "3限", "4限", "給食", "5限", "6限"];
+const TEMPLATE_PERIODS = DISPLAY_PERIODS;
 
 export default function TemplateEditor({
   teachers, subjects, specialSubjects,
