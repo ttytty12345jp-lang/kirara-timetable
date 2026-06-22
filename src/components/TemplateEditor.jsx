@@ -10,6 +10,7 @@ export default function TemplateEditor({
 }) {
   const [selectedDay, setSelectedDay] = useState("月");
   const [selectedClass, setSelectedClass] = useState("1-1");
+  const [fromMode, setFromMode] = useState(null); // null | "base" | "dated"
   const [fromDate, setFromDate] = useState("");
   const [localTemplate, setLocalTemplate] = useState({});
 
@@ -20,8 +21,12 @@ export default function TemplateEditor({
   // 特別クラス教科（specialSubjects）を参照するのは「えい・かに」と「いるか」
   const isSpecialSubjectClass = selectedClass === "えい・かに" || selectedClass === "いるか";
 
+  // 実際に使う fromDate 値（base モードなら ""）
+  const effectiveFrom = fromMode === "base" ? "" : fromMode === "dated" ? fromDate : null;
+
   useEffect(() => {
-    const tData = getTemplateData(selectedDay, selectedClass, fromDate || undefined);
+    if (effectiveFrom === null) { setLocalTemplate({}); return; }
+    const tData = getTemplateData(selectedDay, selectedClass, effectiveFrom || undefined);
     const map = {};
     for (const rec of tData) {
       map[rec.day_template_period] = {
@@ -30,7 +35,7 @@ export default function TemplateEditor({
       };
     }
     setLocalTemplate(map);
-  }, [selectedDay, selectedClass, fromDate, allData]);
+  }, [selectedDay, selectedClass, effectiveFrom, allData]);
 
   function handleCellChange(period, field, value) {
     setLocalTemplate(prev => ({
@@ -39,7 +44,10 @@ export default function TemplateEditor({
     }));
   }
 
+  const canSave = fromMode === "base" || (fromMode === "dated" && fromDate !== "");
+
   function handleSaveTemplate() {
+    if (!canSave) return;
     const periodsToSave = [];
 
     if (isEikani) {
@@ -72,23 +80,24 @@ export default function TemplateEditor({
         day_template_day: selectedDay,
         day_template_class: selectedClass,
         day_template_period: period,
-        day_template_from: fromDate || "",
+        day_template_from: effectiveFrom,
         day_template_subject: vals.subject || "",
         day_template_teacher: vals.teacher || "",
       });
     }
-    const fromLabel = fromDate ? `（${fromDate}〜）` : "";
+    const fromLabel = effectiveFrom ? `（${effectiveFrom}〜）` : "（ベース）";
     onShowToast(`${selectedDay}曜 ${selectedClass}${fromLabel} テンプレートを保存しました ✓`);
   }
 
   function handleDeleteTemplate() {
-    const fromLabel = fromDate ? `（${fromDate}〜）` : "（開始日なし）";
+    if (!canSave) return;
+    const fromLabel = effectiveFrom ? `（${effectiveFrom}〜）` : "（ベース）";
     if (!confirm(`${selectedDay}曜 ${selectedClass} ${fromLabel} のテンプレートを削除しますか？`)) return;
     onDelete(r =>
       r.class_name === "DAY_TEMPLATE" &&
       r.day_template_day === selectedDay &&
       r.day_template_class === selectedClass &&
-      (r.day_template_from || "") === fromDate
+      (r.day_template_from || "") === effectiveFrom
     );
     setLocalTemplate({});
     onShowToast("テンプレートを削除しました");
@@ -146,24 +155,48 @@ export default function TemplateEditor({
           </select>
         </div>
         <div className="form-group-inline">
-          <label className="form-label">開始日</label>
-          <input
-            type="date"
-            className="form-select"
-            value={fromDate}
-            onChange={e => setFromDate(e.target.value)}
-          />
-          {fromDate && (
-            <button
-              className="secondary-btn"
-              style={{ marginLeft: 6, padding: "2px 8px", fontSize: 12 }}
-              onClick={() => setFromDate("")}
-            >
-              クリア
-            </button>
+          <label className="form-label">種別</label>
+          <label className="from-mode-label">
+            <input
+              type="radio"
+              name="fromMode"
+              value="base"
+              checked={fromMode === "base"}
+              onChange={() => setFromMode("base")}
+            />
+            ベース（全日付）
+          </label>
+          <label className="from-mode-label" style={{ marginLeft: 12 }}>
+            <input
+              type="radio"
+              name="fromMode"
+              value="dated"
+              checked={fromMode === "dated"}
+              onChange={() => setFromMode("dated")}
+            />
+            開始日指定
+          </label>
+          {fromMode === "dated" && (
+            <input
+              type="date"
+              className="form-select"
+              style={{ marginLeft: 8 }}
+              value={fromDate}
+              onChange={e => setFromDate(e.target.value)}
+            />
           )}
         </div>
-        {fromDate && (
+        {fromMode === null && (
+          <p className="template-from-note" style={{ color: "var(--danger, #ef4444)" }}>
+            ベースまたは開始日指定を選択してください
+          </p>
+        )}
+        {fromMode === "base" && (
+          <p className="template-from-note">
+            全日付に適用されるベーステンプレートを編集中
+          </p>
+        )}
+        {fromMode === "dated" && fromDate && (
           <p className="template-from-note">
             {fromDate} 以降に適用されるテンプレートを編集中
           </p>
@@ -196,13 +229,13 @@ export default function TemplateEditor({
       )}
 
       <div className="btn-row">
-        <button className="primary-btn" onClick={handleSaveTemplate}>
+        <button className="primary-btn" onClick={handleSaveTemplate} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.4 }}>
           💾 テンプレート保存
         </button>
         <button className="secondary-btn" onClick={handleApplyToDate}>
           📋 {selectedDate} に適用
         </button>
-        <button className="danger-btn" onClick={handleDeleteTemplate}>
+        <button className="danger-btn" onClick={handleDeleteTemplate} disabled={!canSave} style={{ opacity: canSave ? 1 : 0.4 }}>
           🗑 削除
         </button>
       </div>
