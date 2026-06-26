@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || "";
@@ -77,6 +77,7 @@ async function findExisting(record) {
 export function useStorage() {
   const [data, setData]       = useState([]);
   const [loading, setLoading] = useState(true);
+  const initialLoadDone       = useRef(false);
 
   useEffect(() => {
     if (USE_SUPABASE) {
@@ -100,7 +101,7 @@ export function useStorage() {
   }, []);
 
   async function loadFromSupabase() {
-    setLoading(true);
+    if (!initialLoadDone.current) setLoading(true);
     try {
       // ★ 1000件上限を回避するため range で全件取得
       let allRecords = [];
@@ -127,6 +128,7 @@ export function useStorage() {
       console.error("❌ Supabase load error:", err);
       setData([]);
     } finally {
+      initialLoadDone.current = true;
       setLoading(false);
     }
   }
