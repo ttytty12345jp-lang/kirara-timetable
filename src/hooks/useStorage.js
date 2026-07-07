@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { getDateString, getDayOfWeek } from "../utils/constants";
 
 const SUPABASE_URL      = import.meta.env.VITE_SUPABASE_URL      || "";
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -81,7 +82,7 @@ export function useStorage() {
 
   useEffect(() => {
     if (USE_SUPABASE) {
-      loadFromSupabase();
+      loadInitial();
     } else {
       setData(loadDataLocal());
       setLoading(false);
@@ -94,13 +95,56 @@ export function useStorage() {
       .channel("timetable_changes")
       .on("postgres_changes",
         { event: "*", schema: "public", table: "timetable" },
-        () => { loadFromSupabase(); }
+        () => { loadAll(); }
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  async function loadFromSupabase() {
+  // 初回描画用の絞り込みロード（Phase A）→ 全件バックグラウンドロード（Phase B）
+  async function loadInitial() {
+    setLoading(true);
+    try {
+      const today   = getDateString(new Date());
+      const weekday = getDayOfWeek(today); // "月"〜"日"
+      // インデックスの効く条件のみで初回描画に必要な数百件を1クエリで取得
+      const orFilter = [
+        "config_key.not.is.null",
+        `date.eq.${today}`,
+      ];
+      const { data: records, error } = await supabase
+        .from("timetable")
+        .select("*")
+        .or(orFilter.join(","));
+
+      if (error) throw error;
+
+      let firstPaint = records || [];
+      // 平日は今日の曜日のテンプレートも取得（週末は不要）
+      if (["月", "火", "水", "木", "金"].includes(weekday)) {
+        const { data: tpl, error: tErr } = await supabase
+          .from("timetable")
+          .select("*")
+          .eq("class_name", "DAY_TEMPLATE")
+          .eq("day_template_day", weekday);
+        if (tErr) throw tErr;
+        firstPaint = firstPaint.concat(tpl || []);
+      }
+
+      setData(firstPaint);
+    } catch (err) {
+      console.error("❌ Supabase initial load error:", err);
+    } finally {
+      // Phase A で描画済み。以降 loadAll は setLoading を触らない
+      initialLoadDone.current = true;
+      setLoading(false);
+    }
+    // 描画をブロックせず全件を裏で取得
+    loadAll();
+  }
+
+  // 全件ページネーション取得（Phase B / realtime 再取得）
+  async function loadAll() {
     if (!initialLoadDone.current) setLoading(true);
     try {
       // ★ 1000件上限を回避するため range で全件取得
@@ -126,7 +170,7 @@ export function useStorage() {
       setData(allRecords);
     } catch (err) {
       console.error("❌ Supabase load error:", err);
-      setData([]);
+      if (!initialLoadDone.current) setData([]);
     } finally {
       initialLoadDone.current = true;
       setLoading(false);

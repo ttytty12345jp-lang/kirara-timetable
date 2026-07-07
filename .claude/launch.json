@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kirara-timetable",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5174
+    },
+    {
+      "name": "school-events",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/Users/ttytt/Documents/GitHub/school-events", "run", "dev"],
+      "port": 5173
+    }
+  ]
+}
