@@ -416,7 +416,7 @@ export default function TimetableGrid({
               );
             })}
             <tr className="cut-row">
-              <td colSpan={2} className="cut-row-label">カット</td>
+              <td colSpan={2} className="cut-row-label"></td>
               {DISPLAY_PERIODS.map(period => (
                 <td key={period} className="cut-cell">
                   <button
