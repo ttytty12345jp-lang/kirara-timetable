@@ -9,6 +9,41 @@ const parseKey = (key) => {
   return { cls: key.slice(0, i), period: key.slice(i + 1) };
 };
 
+// 指定した時限（表示上の列）に属する編集可能セルを全クラス分列挙する。
+// カット機能で列全体を空白にするために使用。render のロジックと対応させる。
+function cellsForPeriod(period) {
+  const isLunch = period === "給食";
+  const cells = [];
+  for (const cls of CLASSES) {
+    if (cls === "F") {
+      if (isLunch) {
+        cells.push({ cls, pKey: "給食", field: "teacher" });
+      } else {
+        cells.push({ cls, pKey: period,        field: "teacher" });
+        cells.push({ cls, pKey: `${period}_2`, field: "teacher" });
+      }
+    } else if (cls === "えい・かに") {
+      if (isLunch) {
+        cells.push({ cls, pKey: "給食", field: "teacher" });
+      } else {
+        for (const sfx of ["", "_2", "_3"]) {
+          cells.push({ cls, pKey: `${period}${sfx}`, field: "subject" });
+          cells.push({ cls, pKey: `${period}${sfx}`, field: "teacher" });
+        }
+      }
+    } else {
+      // 通常クラス・いるか（給食の教科は固定なので教員のみ）
+      if (isLunch) {
+        cells.push({ cls, pKey: "給食", field: "teacher" });
+      } else {
+        cells.push({ cls, pKey: period, field: "subject" });
+        cells.push({ cls, pKey: period, field: "teacher" });
+      }
+    }
+  }
+  return cells;
+}
+
 function isCellChanged(tpl, cur) {
   if (!tpl && !cur)       return false;
   if (!tpl &&  cur)       return true;
@@ -130,6 +165,18 @@ export default function TimetableGrid({
   }, [getTemplateValue]);
 
   const handleCancel = useCallback(() => setEditingCell(null), []);
+
+  // その時限の全欄を空白にする（pending に "" を入れるだけ。保存は別途）
+  const handleCutPeriod = useCallback((period) => {
+    setPendingChanges(prev => {
+      const next = { ...prev };
+      for (const { cls, pKey, field } of cellsForPeriod(period)) {
+        const key = makeKey(cls, pKey);
+        next[key] = { ...(next[key] || {}), [field]: "" };
+      }
+      return next;
+    });
+  }, []);
 
   const handleSaveAll = useCallback(() => {
   const toSave = [];
@@ -353,6 +400,21 @@ export default function TimetableGrid({
                 </React.Fragment>
               );
             })}
+            <tr className="cut-row">
+              <td colSpan={2} className="cut-row-label">カット</td>
+              {DISPLAY_PERIODS.map(period => (
+                <td key={period} className="cut-cell">
+                  <button
+                    type="button"
+                    className="cut-btn"
+                    onClick={() => handleCutPeriod(period)}
+                    title={`${period}の全欄を空白にする（保存で確定）`}
+                  >
+                    カット
+                  </button>
+                </td>
+              ))}
+            </tr>
           </tbody>
         </table>
       </div>

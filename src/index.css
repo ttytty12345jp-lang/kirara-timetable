@@ -286,6 +286,30 @@ body {
 .lunch-cell { cursor: default; }
 .lunch-cell:hover { outline: none; }
 
+/* カットボタン行（F の下・枠外扱い） */
+.cut-row td { background: transparent; border: none; padding: 4px 2px 0; }
+.cut-row-label {
+  text-align: right;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.cut-cell { text-align: center; }
+.cut-btn {
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+  padding: 3px 6px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text, #374151);
+  white-space: nowrap;
+}
+.cut-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
+.cut-btn:active { background: #fecaca; }
+
 /* 教科行と教員行の境界 */
 .class-subject-row td { border-bottom: none; }
 .class-teacher-row td { border-top: 1px dashed rgba(0,0,0,0.1); }
