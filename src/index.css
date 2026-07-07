@@ -303,12 +303,20 @@ body {
   padding: 3px 6px;
   border: 1px solid var(--border, #d1d5db);
   border-radius: 4px;
-  background: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f1f2f4 100%);
   color: var(--text, #374151);
   white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
 }
-.cut-btn:hover { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
-.cut-btn:active { background: #fecaca; }
+.cut-btn:hover {
+  background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+.cut-btn:active {
+  background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
 
 /* 教科行と教員行の境界 */
 .class-subject-row td { border-bottom: none; }
@@ -373,6 +381,37 @@ body {
 .eikani-row { height: 20px; }
 
 /* ======== SAVE BUTTON ======== */
+.save-btn-group { display: flex; align-items: center; gap: 8px; }
+
+.cancel-btn {
+  background: #fff;
+  color: var(--text-muted, #6b7280);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+  font-family: 'Noto Sans JP', sans-serif;
+}
+
+.cancel-btn:disabled {
+  color: #cbd5e1;
+  border-color: #e5e7eb;
+  background: #f9fafb;
+  cursor: default;
+}
+
+.cancel-btn:not(:disabled):hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
 .save-btn {
   background: var(--primary);
   color: white;
@@ -801,6 +840,18 @@ body {
   .timetable-cell { padding:  0; }
   .class-teacher-row .timetable-cell{
     height: 12ptx;
+  }
+
+  .cut-row-label { font-size: 8px; }
+  .cut-btn {
+    font-size: 7px;
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+
+  .cancel-btn, .save-btn {
+    padding: 5px 10px;
+    font-size: 11px;
   }
 }
 

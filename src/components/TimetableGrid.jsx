@@ -166,6 +166,12 @@ export default function TimetableGrid({
 
   const handleCancel = useCallback(() => setEditingCell(null), []);
 
+  // 未保存の変更をすべて破棄し、保存前の状態に戻す
+  const handleCancelAll = useCallback(() => {
+    setPendingChanges({});
+    setEditingCell(null);
+  }, []);
+
   // その時限の全欄を空白にする（pending に "" を入れるだけ。保存は別途）
   const handleCutPeriod = useCallback((period) => {
     setPendingChanges(prev => {
@@ -276,12 +282,21 @@ export default function TimetableGrid({
           時間割
           <span className="date-label">{selectedDate} ({dayOfWeek})</span>
         </h2>
-        <button
-          className={`save-btn ${hasPending ? "pending" : ""}`}
-          onClick={handleSaveAll}
-        >
-          💾 保存{hasPending && <span className="pending-dot" />}
-        </button>
+        <div className="save-btn-group">
+          <button
+            className="cancel-btn"
+            onClick={handleCancelAll}
+            disabled={!hasPending}
+          >
+            ✕ キャンセル
+          </button>
+          <button
+            className={`save-btn ${hasPending ? "pending" : ""}`}
+            onClick={handleSaveAll}
+          >
+            💾 保存{hasPending && <span className="pending-dot" />}
+          </button>
+        </div>
       </div>
 
       <div className="table-scroll-wrapper">
