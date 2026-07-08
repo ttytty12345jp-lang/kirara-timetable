@@ -357,7 +357,10 @@ body {
   font-weight: 500;
 }
 
-.changed { background: var(--changed-bg) !important; }
+/* 実際の色分けは TimetableGrid.jsx の inline style（優先順位: 編集中 > 未保存 > 給食 > テンプレ差分）で行う。
+   これらのクラスはセレクタとしてのみ利用（!important は使わず inline を優先させる）。 */
+.changed { background: var(--changed-bg); }
+.pending-cell { background: #c4b5fd; }
 
 .cell-inline-input,
 .cell-inline-select {
@@ -467,10 +470,11 @@ body {
 .legend-item { display: flex; align-items: center; gap: 3px; }
 .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
 .changed-dot { background: var(--changed-bg); }
-.pending-legend-dot { background: var(--accent); }
+.pending-legend-dot { background: #c4b5fd; }
 .legend-sep { margin-left: auto; font-size: 8px; }
 
-.absent-control { gap: 5px; font-size: 10px; }
+.absent-control { gap: 5px; font-size: 10px; margin-left: 16px; padding-left: 12px; border-left: 1px solid var(--border, #d1d5db); }
+.absent-control-label { font-weight: 700; color: var(--text, #374151); margin-right: 2px; }
 .absent-teacher-select {
   font-size: 10px;
   padding: 2px 4px;

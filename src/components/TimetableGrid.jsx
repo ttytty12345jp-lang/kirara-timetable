@@ -266,6 +266,7 @@ export default function TimetableGrid({
     const value     = getCellValue(cls, pKey, field);
     const tplVal    = getTemplateValue(cls, pKey, field);
     const changed   = isCellChanged(tplVal, value);
+    const isPending = pendingChanges[makeKey(cls, pKey)]?.[field] !== undefined;
     const isEditing = editingCell?.cls === cls
                    && editingCell?.period === pKey
                    && editingCell?.field  === field;
@@ -278,10 +279,12 @@ export default function TimetableGrid({
           "timetable-cell",
           isSubject ? "subject-cell" : "teacher-cell",
           changed  ? "changed"    : "",
+          isPending ? "pending-cell" : "",
           isLunch  ? "lunch-cell" : "",
         ].filter(Boolean).join(" ")}
         style={{
           backgroundColor: isEditing ? "#fef9c3"
+                         : isPending ? "#c4b5fd"
                          : isLunch   ? "#e0f2fe"
                          : changed   ? "#fca5a5"
                          : bgColor,
@@ -476,6 +479,7 @@ export default function TimetableGrid({
           <span className="legend-dot pending-legend-dot" />未保存の変更
         </span>
         <span className="legend-item absent-control">
+          <span className="absent-control-label">一斉消去</span>
           <select
             className="absent-teacher-select"
             value={absentTeacher}
