@@ -199,18 +199,15 @@ export default function TimetableGrid({
   // 選択した教員をその日の時間割から一斉削除し、メモに「〇〇先生 不在」を追記する
   const handleMarkAbsent = useCallback(() => {
     if (!absentTeacher) return;
-    let matched = false;
+    // setState の更新関数は非同期に処理されるため、対象判定は先に済ませておく
+    const keysToClear = allTeacherCells()
+      .filter(({ cls, pKey, field }) => getCellValue(cls, pKey, field) === absentTeacher);
+    const matched = keysToClear.length > 0;
     setPendingChanges(prev => {
       const next = { ...prev };
-      for (const { cls, pKey, field } of allTeacherCells()) {
+      for (const { cls, pKey, field } of keysToClear) {
         const key = makeKey(cls, pKey);
-        const current = next[key]?.[field] !== undefined
-          ? next[key][field]
-          : getCellValue(cls, pKey, field);
-        if (current === absentTeacher) {
-          matched = true;
-          next[key] = { ...(next[key] || {}), [field]: "" };
-        }
+        next[key] = { ...(next[key] || {}), [field]: "" };
       }
       return next;
     });
