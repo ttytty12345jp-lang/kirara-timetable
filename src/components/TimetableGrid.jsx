@@ -284,7 +284,7 @@ export default function TimetableGrid({
         ].filter(Boolean).join(" ")}
         style={{
           backgroundColor: isEditing ? "#fef9c3"
-                         : isPending ? "#c4b5fd"
+                         : isPending ? "#e9d5ff"
                          : isLunch   ? "#e0f2fe"
                          : changed   ? "#fca5a5"
                          : bgColor,

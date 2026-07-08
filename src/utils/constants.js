@@ -43,7 +43,7 @@ export const GRADE_COLORS = {
   3: "#fecaca",
   4: "#dcfce7",
   5: "#fed7aa",
-  6: "#e9d5ff",
+  6: "#ffffff",
 };
 
 export const IRUKA_COLOR  = "#eef0ff";
