@@ -44,6 +44,17 @@ function cellsForPeriod(period) {
   return cells;
 }
 
+// 全時限・全クラスの教員セルを列挙する（不在ボタンで一斉削除するために使用）
+function allTeacherCells() {
+  const cells = [];
+  for (const period of DISPLAY_PERIODS) {
+    for (const cell of cellsForPeriod(period)) {
+      if (cell.field === "teacher") cells.push(cell);
+    }
+  }
+  return cells;
+}
+
 function isCellChanged(tpl, cur) {
   if (!tpl && !cur)       return false;
   if (!tpl &&  cur)       return true;
@@ -93,10 +104,11 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble, templateVal
 
 export default function TimetableGrid({
   selectedDate, dayOfWeek, dayData, getTemplateData,
-  subjects, teachers, specialSubjects, onSave, onShowToast,
+  subjects, teachers, specialSubjects, onSave, onShowToast, onTeacherAbsent,
 }) {
   const [pendingChanges, setPendingChanges] = useState({});
   const [editingCell,    setEditingCell]    = useState(null);
+  const [absentTeacher,  setAbsentTeacher]  = useState("");
   const clickTimer = useRef(null);
 
   // 日付変更時に未保存変更をリセット
@@ -183,6 +195,31 @@ export default function TimetableGrid({
       return next;
     });
   }, []);
+
+  // 選択した教員をその日の時間割から一斉削除し、メモに「〇〇先生 不在」を追記する
+  const handleMarkAbsent = useCallback(() => {
+    if (!absentTeacher) return;
+    let matched = false;
+    setPendingChanges(prev => {
+      const next = { ...prev };
+      for (const { cls, pKey, field } of allTeacherCells()) {
+        const key = makeKey(cls, pKey);
+        const current = next[key]?.[field] !== undefined
+          ? next[key][field]
+          : getCellValue(cls, pKey, field);
+        if (current === absentTeacher) {
+          matched = true;
+          next[key] = { ...(next[key] || {}), [field]: "" };
+        }
+      }
+      return next;
+    });
+    onTeacherAbsent?.(absentTeacher);
+    onShowToast(matched
+      ? `${absentTeacher}先生を時間割から削除しました（保存ボタンを押してください）`
+      : `${absentTeacher}先生の担当コマはありませんでした`);
+    setAbsentTeacher("");
+  }, [absentTeacher, getCellValue, onTeacherAbsent, onShowToast]);
 
   const handleSaveAll = useCallback(() => {
   const toSave = [];
@@ -440,6 +477,26 @@ export default function TimetableGrid({
         </span>
         <span className="legend-item">
           <span className="legend-dot pending-legend-dot" />未保存の変更
+        </span>
+        <span className="legend-item absent-control">
+          <select
+            className="absent-teacher-select"
+            value={absentTeacher}
+            onChange={e => setAbsentTeacher(e.target.value)}
+          >
+            <option value="">先生を選択</option>
+            {teachers.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          先生
+          <button
+            type="button"
+            className="absent-btn"
+            onClick={handleMarkAbsent}
+            disabled={!absentTeacher}
+            title="選択した先生をこの日の時間割から一斉削除し、メモに記録する"
+          >
+            不在
+          </button>
         </span>
         <span className="legend-sep">クリック: ドロップダウン / ダブルクリック: 手入力</span>
       </div>

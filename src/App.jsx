@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from "react";
 import Header from "./components/Header";
 import DatePicker from "./components/DatePicker";
 import TimetableGrid from "./components/TimetableGrid";
@@ -71,6 +71,13 @@ export default function App() {
     saveRecord({ config_key: `memo_${selectedDate}`, config_value: value });
   }, [saveRecord, selectedDate]);
 
+  const memoRef = useRef(null);
+
+  // 教員を「不在」にした際、メモ欄に自動で行を追加する
+  const handleTeacherAbsent = useCallback((teacherName) => {
+    memoRef.current?.appendLine(`${teacherName}先生 不在`);
+  }, []);
+
   // 同じ日付で2回 getDayData を呼ばないようにメモ化
   const currentDayData = useMemo(() => getDayData(selectedDate), [getDayData, selectedDate]);
 
@@ -92,6 +99,7 @@ export default function App() {
           </div>
         ) : (
           <MemoSection
+            ref={memoRef}
             value={memoValue}
             onChange={handleMemoChange}
             selectedDate={selectedDate}
@@ -109,6 +117,7 @@ export default function App() {
             specialSubjects={specialSubjects}
             onSave={saveRecord}
             onShowToast={showToast}
+            onTeacherAbsent={handleTeacherAbsent}
           />
         )}
 
@@ -132,7 +141,7 @@ export default function App() {
 
 // メモコンポーネント（デバウンス付き自動保存）
 // 非制御コンポーネント：React が textarea.value を強制セットしないので IME 変換が壊れない
-function MemoSection({ value, onChange, selectedDate }) {
+const MemoSection = forwardRef(function MemoSection({ value, onChange, selectedDate }, ref) {
   const textareaRef  = useRef(null);
   const isComposing  = useRef(false);
   const savedValue   = useRef(value);
@@ -165,6 +174,19 @@ function MemoSection({ value, onChange, selectedDate }) {
     }, 800);
   }
 
+  // 外部（不在ボタン等）からメモに1行追記し、即座に保存する
+  useImperativeHandle(ref, () => ({
+    appendLine(text) {
+      const current  = textareaRef.current?.value || "";
+      const newValue = current ? `${current}\n${text}` : text;
+      userHasTyped.current = true;
+      clearTimeout(timerRef.current);
+      if (textareaRef.current) textareaRef.current.value = newValue;
+      savedValue.current = newValue;
+      onChange(newValue);
+    }
+  }));
+
   return (
     <section className="memo-section">
       <textarea
@@ -184,4 +206,4 @@ function MemoSection({ value, onChange, selectedDate }) {
       />
     </section>
   );
-}
+});

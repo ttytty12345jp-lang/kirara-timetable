@@ -470,6 +470,43 @@ body {
 .pending-legend-dot { background: var(--accent); }
 .legend-sep { margin-left: auto; font-size: 8px; }
 
+.absent-control { gap: 5px; font-size: 10px; }
+.absent-teacher-select {
+  font-size: 10px;
+  padding: 2px 4px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text, #374151);
+  max-width: 90px;
+}
+.absent-btn {
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 8px;
+  border: 1px solid #fca5a5;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fee2e2 0%, #fecaca 100%);
+  color: #b91c1c;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.absent-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fecaca 0%, #fca5a5 100%);
+}
+.absent-btn:active:not(:disabled) {
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+.absent-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
 /* ======== SETTINGS ======== */
 .tabs { display: flex; gap: 3px; margin-bottom: 10px; flex-wrap: wrap; }
 
@@ -853,6 +890,10 @@ body {
     padding: 5px 10px;
     font-size: 11px;
   }
+
+  .absent-control { font-size: 8px; }
+  .absent-teacher-select { font-size: 8px; padding: 1px 3px; max-width: 70px; }
+  .absent-btn { font-size: 8px; padding: 2px 6px; }
 }
 
 @media (max-width: 400px) {
