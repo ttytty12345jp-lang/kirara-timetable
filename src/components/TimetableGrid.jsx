@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { CLASSES, getClassColor, DISPLAY_PERIODS } from "../utils/constants";
+import { CLASSES, getClassColor, DISPLAY_PERIODS, getGrade } from "../utils/constants";
+
+// 一斉入力の対象時限（給食は教科固定のため除外）
+const BULK_FILL_PERIODS = DISPLAY_PERIODS.filter(p => p !== "給食");
+const BULK_FILL_GRADES  = ["all", "1", "2", "3", "4", "5", "6"];
+const bulkFillGradeLabel = (g) => (g === "all" ? "全学年" : `${g}年`);
 const WEEKDAYS = new Set(["月", "火", "水", "木", "金"]);
 
 // クラス名・時限名に絶対含まれないタブ文字でキーを生成
@@ -39,6 +44,26 @@ function cellsForPeriod(period) {
         cells.push({ cls, pKey: period, field: "subject" });
         cells.push({ cls, pKey: period, field: "teacher" });
       }
+    }
+  }
+  return cells;
+}
+
+// 指定した時限・学年（"all"可）の教科セルを列挙する（一斉入力用）
+function subjectCellsForPeriod(period, grade) {
+  const cells = [];
+  for (const cls of CLASSES) {
+    if (cls === "F") continue; // 教科欄が存在しない
+    if (grade !== "all") {
+      if (cls === "いるか" || cls === "えい・かに") continue; // 学年に属さない
+      if (String(getGrade(cls)) !== grade) continue;
+    }
+    if (cls === "えい・かに") {
+      for (const sfx of ["", "_2", "_3"]) {
+        cells.push({ cls, pKey: `${period}${sfx}`, field: "subject" });
+      }
+    } else {
+      cells.push({ cls, pKey: period, field: "subject" });
     }
   }
   return cells;
@@ -109,6 +134,9 @@ export default function TimetableGrid({
   const [pendingChanges, setPendingChanges] = useState({});
   const [editingCell,    setEditingCell]    = useState(null);
   const [absentTeacher,  setAbsentTeacher]  = useState("");
+  const [bulkPeriod, setBulkPeriod] = useState(BULK_FILL_PERIODS[0]);
+  const [bulkGrade,  setBulkGrade]  = useState("all");
+  const [bulkText,   setBulkText]   = useState("");
   const clickTimer = useRef(null);
 
   // 日付変更時に未保存変更をリセット
@@ -217,6 +245,21 @@ export default function TimetableGrid({
       : `${absentTeacher}先生の担当コマはありませんでした`);
     setAbsentTeacher("");
   }, [absentTeacher, getCellValue, onTeacherAbsent, onShowToast]);
+
+  // 指定した時限（＋学年）の教科欄に文字列を一斉入力する（pending に入れるだけ。保存は別途）
+  const handleBulkFill = useCallback(() => {
+    if (!bulkPeriod || !bulkText) return;
+    const cells = subjectCellsForPeriod(bulkPeriod, bulkGrade);
+    setPendingChanges(prev => {
+      const next = { ...prev };
+      for (const { cls, pKey, field } of cells) {
+        const key = makeKey(cls, pKey);
+        next[key] = { ...(next[key] || {}), [field]: bulkText };
+      }
+      return next;
+    });
+    onShowToast(`${bulkPeriod}（${bulkFillGradeLabel(bulkGrade)}）に「${bulkText}」を一斉入力しました（保存ボタンを押してください）`);
+  }, [bulkPeriod, bulkGrade, bulkText, onShowToast]);
 
   const handleSaveAll = useCallback(() => {
   const toSave = [];
@@ -469,6 +512,44 @@ export default function TimetableGrid({
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div className="bulk-fill-bar">
+        <span className="bulk-fill-label">一斉入力</span>
+        <select
+          className="bulk-fill-select"
+          value={bulkGrade}
+          onChange={e => setBulkGrade(e.target.value)}
+        >
+          {BULK_FILL_GRADES.map(g => (
+            <option key={g} value={g}>{bulkFillGradeLabel(g)}</option>
+          ))}
+        </select>
+        <select
+          className="bulk-fill-select"
+          value={bulkPeriod}
+          onChange={e => setBulkPeriod(e.target.value)}
+        >
+          {BULK_FILL_PERIODS.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <span>に</span>
+        <input
+          type="text"
+          className="bulk-fill-input"
+          value={bulkText}
+          onChange={e => setBulkText(e.target.value)}
+          placeholder="例）避難訓練"
+        />
+        <span>を</span>
+        <button
+          type="button"
+          className="bulk-fill-btn"
+          onClick={handleBulkFill}
+          disabled={!bulkText}
+          title="指定した時限の教科欄に文字列を一斉入力する（保存で確定）"
+        >
+          一斉入力
+        </button>
       </div>
 
       <div className="legend">

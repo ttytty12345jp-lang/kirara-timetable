@@ -318,6 +318,65 @@ body {
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
 }
 
+/* 一斉入力バー（テーブルと凡例の間） */
+.bulk-fill-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #f8fafc;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--text, #374151);
+}
+.bulk-fill-label { font-weight: 700; margin-right: 2px; }
+.bulk-fill-select {
+  font-size: 11px;
+  padding: 2px 4px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text, #374151);
+}
+.bulk-fill-input {
+  font-size: 11px;
+  padding: 2px 6px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text, #374151);
+  width: 120px;
+}
+.bulk-fill-btn {
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 4px 10px;
+  border: 1px solid var(--primary, #6366f1);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #3730a3;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.bulk-fill-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #c7d2fe 0%, #a5b4fc 100%);
+}
+.bulk-fill-btn:active:not(:disabled) {
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+}
+.bulk-fill-btn:disabled {
+  cursor: default;
+  opacity: 0.4;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  color: #9ca3af;
+}
+
 /* 教科行と教員行の境界 */
 .class-subject-row td { border-bottom: none; }
 .class-teacher-row td { border-top: 1px dashed rgba(0,0,0,0.1); }
@@ -898,6 +957,11 @@ body {
   .absent-control { font-size: 8px; }
   .absent-teacher-select { font-size: 8px; padding: 1px 3px; max-width: 70px; }
   .absent-btn { font-size: 8px; padding: 2px 6px; }
+
+  .bulk-fill-bar { font-size: 9px; padding: 4px 6px; gap: 4px; }
+  .bulk-fill-select { font-size: 9px; padding: 1px 3px; }
+  .bulk-fill-input { font-size: 9px; padding: 1px 4px; width: 80px; }
+  .bulk-fill-btn { font-size: 9px; padding: 3px 7px; }
 }
 
 @media (max-width: 400px) {
