@@ -532,7 +532,7 @@ body {
 .pending-legend-dot { background: #e9d5ff; }
 .legend-sep { margin-left: auto; font-size: 8px; }
 
-.absent-control { gap: 5px; font-size: 10px; margin-left: 16px; padding-left: 12px; border-left: 1px solid var(--border, #d1d5db); }
+.absent-control { gap: 5px; font-size: 10px; padding-right: 12px; margin-right: 4px; border-right: 1px solid var(--border, #d1d5db); }
 .absent-control-label { font-weight: 700; color: var(--text, #374151); margin-right: 2px; }
 .absent-teacher-select {
   font-size: 10px;

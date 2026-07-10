@@ -553,12 +553,6 @@ export default function TimetableGrid({
       </div>
 
       <div className="legend">
-        <span className="legend-item">
-          <span className="legend-dot changed-dot" />テンプレートと異なる
-        </span>
-        <span className="legend-item">
-          <span className="legend-dot pending-legend-dot" />未保存の変更
-        </span>
         <span className="legend-item absent-control">
           <span className="absent-control-label">一斉消去</span>
           <select
@@ -579,6 +573,12 @@ export default function TimetableGrid({
           >
             不在
           </button>
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot changed-dot" />テンプレートと異なる
+        </span>
+        <span className="legend-item">
+          <span className="legend-dot pending-legend-dot" />未保存の変更
         </span>
         <span className="legend-sep">クリック: ドロップダウン / ダブルクリック: 手入力</span>
       </div>
