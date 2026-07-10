@@ -53,18 +53,9 @@ function cellsForPeriod(period) {
 function subjectCellsForPeriod(period, grade) {
   const cells = [];
   for (const cls of CLASSES) {
-    if (cls === "F") continue; // 教科欄が存在しない
-    if (grade !== "all") {
-      if (cls === "いるか" || cls === "えい・かに") continue; // 学年に属さない
-      if (String(getGrade(cls)) !== grade) continue;
-    }
-    if (cls === "えい・かに") {
-      for (const sfx of ["", "_2", "_3"]) {
-        cells.push({ cls, pKey: `${period}${sfx}`, field: "subject" });
-      }
-    } else {
-      cells.push({ cls, pKey: period, field: "subject" });
-    }
+    if (cls === "F" || cls === "いるか" || cls === "えい・かに") continue; // 一斉入力の対象外
+    if (grade !== "all" && String(getGrade(cls)) !== grade) continue;
+    cells.push({ cls, pKey: period, field: "subject" });
   }
   return cells;
 }
