@@ -60,6 +60,38 @@ function subjectCellsForPeriod(period, grade) {
   return cells;
 }
 
+const FULLWIDTH_DIGITS = "０１２３４５６７８９";
+
+// 特別教科の文字列（例: "4-1算", "４年国"）の先頭文字から学年を推定する
+function subjectGrade(value) {
+  if (!value) return null;
+  const ch = value[0];
+  if (ch >= "0" && ch <= "9") return Number(ch);
+  const idx = FULLWIDTH_DIGITS.indexOf(ch);
+  return idx >= 0 ? idx : null;
+}
+
+// いるか・えい・かにのうち、指定学年（"all"可）に該当する行の教科＋教員セルを列挙する
+// （一斉入力時、対象学年が混在するこれらのクラスは自由文字列を入れず空欄にするため）
+function specialClassGradeCells(period, grade, getCellValue) {
+  const targets = [
+    { cls: "いるか", sfxList: [""] },
+    { cls: "えい・かに", sfxList: ["", "_2", "_3"] },
+  ];
+  const cells = [];
+  for (const { cls, sfxList } of targets) {
+    for (const sfx of sfxList) {
+      const pKey = `${period}${sfx}`;
+      const subjectVal = getCellValue(cls, pKey, "subject");
+      if (grade === "all" || subjectGrade(subjectVal) === Number(grade)) {
+        cells.push({ cls, pKey, field: "subject" });
+        cells.push({ cls, pKey, field: "teacher" });
+      }
+    }
+  }
+  return cells;
+}
+
 // 全時限・全クラスの教員セルを列挙する（不在ボタンで一斉削除するために使用）
 function allTeacherCells() {
   const cells = [];
@@ -240,17 +272,24 @@ export default function TimetableGrid({
   // 指定した時限（＋学年）の教科欄に文字列を一斉入力する（pending に入れるだけ。保存は別途）
   const handleBulkFill = useCallback(() => {
     if (!bulkPeriod || !bulkText) return;
-    const cells = subjectCellsForPeriod(bulkPeriod, bulkGrade);
+    const fillCells  = subjectCellsForPeriod(bulkPeriod, bulkGrade);
+    // いるか・えい・かには学年混在クラスのため自由文字列は入れず、
+    // 対象学年（全学年の場合は全行）を教科・教員ごと空欄にする
+    const clearCells = specialClassGradeCells(bulkPeriod, bulkGrade, getCellValue);
     setPendingChanges(prev => {
       const next = { ...prev };
-      for (const { cls, pKey, field } of cells) {
+      for (const { cls, pKey, field } of fillCells) {
         const key = makeKey(cls, pKey);
         next[key] = { ...(next[key] || {}), [field]: bulkText };
+      }
+      for (const { cls, pKey, field } of clearCells) {
+        const key = makeKey(cls, pKey);
+        next[key] = { ...(next[key] || {}), [field]: "" };
       }
       return next;
     });
     onShowToast(`${bulkPeriod}（${bulkFillGradeLabel(bulkGrade)}）に「${bulkText}」を一斉入力しました（保存ボタンを押してください）`);
-  }, [bulkPeriod, bulkGrade, bulkText, onShowToast]);
+  }, [bulkPeriod, bulkGrade, bulkText, getCellValue, onShowToast]);
 
   const handleSaveAll = useCallback(() => {
   const toSave = [];
