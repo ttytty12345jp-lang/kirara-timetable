@@ -132,6 +132,11 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble, templateVal
       />
     );
   }
+  // 一斉入力など、選択肢に無い自由文字列が現在値の場合、ネイティブ select の
+  // 選択状態と React の value が食い違い、"—" を選び直しても onChange が
+  // 発火しなくなる（既に選択中と判定されるため）。現在値を選択肢に加えて解消する。
+  const hasCurrentOption = !text || text === RESET_SENTINEL || options.includes(text);
+
   return (
     <select
       ref={ref}
@@ -145,6 +150,7 @@ function CellEditor({ value, options, onConfirm, onCancel, isDouble, templateVal
       {templateValue && (
         <option value={RESET_SENTINEL}>↩ {templateValue}（デフォルト）</option>
       )}
+      {!hasCurrentOption && <option value={text}>{text}</option>}
       {options.map(o => <option key={o} value={o}>{o}</option>)}
     </select>
   );
