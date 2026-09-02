@@ -176,21 +176,24 @@ serve(async (req) => {
       worksheet.getRow(Number(r)).height = rowHeights[Number(r)];
     });
 
-    const MATOME_ROW = 17;
-    worksheet.getRow(MATOME_ROW).height = 120;
+    // 「まとめ」段を2段に分ける（高さは1段分と同じ120のまま、単純に2段分で倍になる）
+    const MATOME_ROWS = [17, 18];
+    for (const MATOME_ROW of MATOME_ROWS) {
+      worksheet.getRow(MATOME_ROW).height = 120;
 
-    const cellMatomeTitle = worksheet.getCell(MATOME_ROW, 1);
-    cellMatomeTitle.value = "まとめ";
-    cellMatomeTitle.font = { bold: true, name: "Yu Gothic" };
-    cellMatomeTitle.alignment = { horizontal: "center", vertical: "middle" };
+      const cellMatomeTitle = worksheet.getCell(MATOME_ROW, 1);
+      cellMatomeTitle.value = "まとめ";
+      cellMatomeTitle.font = { bold: true, name: "Yu Gothic" };
+      cellMatomeTitle.alignment = { horizontal: "center", vertical: "middle" };
 
-    worksheet.mergeCells(MATOME_ROW, 2, MATOME_ROW, 11);
-    const cellMatomeInput = worksheet.getCell(MATOME_ROW, 2);
-    cellMatomeInput.alignment = {
-      horizontal: "left",
-      vertical: "top",
-      wrapText: true
-    };
+      worksheet.mergeCells(MATOME_ROW, 2, MATOME_ROW, 11);
+      const cellMatomeInput = worksheet.getCell(MATOME_ROW, 2);
+      cellMatomeInput.alignment = {
+        horizontal: "left",
+        vertical: "top",
+        wrapText: true
+      };
+    }
 
     // 全体に細い罫線を適用
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
@@ -208,7 +211,7 @@ serve(async (req) => {
     });
 
     // 各時限の区切り線を太くする
-    const PERIOD_SEPARATOR_ROWS = [3, 4, 6, 8, 10, 12, 13, 15, 17];
+    const PERIOD_SEPARATOR_ROWS = [3, 4, 6, 8, 10, 12, 13, 15, 17, 18];
     for (const rowNum of PERIOD_SEPARATOR_ROWS) {
       const row = worksheet.getRow(rowNum);
       row.eachCell({ includeEmpty: true }, (cell) => {
