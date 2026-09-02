@@ -179,7 +179,7 @@ serve(async (req) => {
     // 「まとめ」段を2段に分け、それぞれ別の見出しにする（高さは元の120の0.7倍）
     const MATOME_ROW_HEIGHT = 120 * 0.7;
     const MATOME_SECTIONS = [
-      { row: 17, label: "今週の振り返り" },
+      { row: 17, label: "今週の\n振り返り" },
       { row: 18, label: "校長より" },
     ];
     for (const { row: MATOME_ROW, label } of MATOME_SECTIONS) {
@@ -187,7 +187,7 @@ serve(async (req) => {
 
       const cellMatomeTitle = worksheet.getCell(MATOME_ROW, 1);
       cellMatomeTitle.value = label;
-      cellMatomeTitle.font = { bold: true, name: "Yu Gothic" };
+      cellMatomeTitle.font = { size: 10, bold: true, name: "Yu Gothic" };
       cellMatomeTitle.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
 
       worksheet.mergeCells(MATOME_ROW, 2, MATOME_ROW, 11);
