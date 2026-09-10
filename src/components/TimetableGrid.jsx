@@ -299,7 +299,6 @@ export default function TimetableGrid({
 
   const handleSaveAll = useCallback(() => {
   const toSave = [];
-  const savedKeys = new Set();
 
   for (const [key, changes] of Object.entries(pendingChanges)) {
     const { cls, period } = parseKey(key);
@@ -325,15 +324,12 @@ export default function TimetableGrid({
       subject,
       teacher,
     });
-    savedKeys.add(key);
   }
 
-  // pendingChanges にない既存データはそのまま保持
-  for (const [key, rec] of dayDataMap.entries()) {
-    if (!savedKeys.has(key)) {
-      toSave.push(rec);
-    }
-  }
+  // 変更していない既存データは Supabase 側に既にあるため再送信しない。
+  // （以前は dayDataMap の全レコードを毎回再送信しており、保存のたびに
+  //   数十件の更新→Realtime再取得が連鎖してレース状態になり、
+  //   直前に保存した値が古いスナップショットで上書きされ消える不具合があった）
 
   for (const rec of toSave) onSave(rec);
   setPendingChanges({});
